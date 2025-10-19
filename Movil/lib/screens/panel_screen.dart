@@ -1,10 +1,74 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../models/usuario.dart';
+import '../services/api_service.dart';
 import 'login_screen.dart';
+import 'perfil_screen.dart';
 
-class PanelScreen extends StatelessWidget {
+class PanelScreen extends StatefulWidget {
   const PanelScreen({super.key});
+
+  @override
+  State<PanelScreen> createState() => _PanelScreenState();
+}
+
+class _PanelScreenState extends State<PanelScreen> {
+  final _apiService = ApiService();
+  String? _fotoPerfil;
+  bool _cargandoFoto = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarDatosUsuario();
+  }
+
+  Future<void> _cargarDatosUsuario() async {
+    try {
+      final response = await _apiService.get('/api/auth/perfil');
+      if (response['success']) {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        await authProvider.actualizarUsuario(response['data']);
+        
+        // Cargar foto de perfil si existe
+        await _cargarFotoPerfil();
+      }
+    } catch (e) {
+      print('Error al cargar datos del usuario: $e');
+    }
+  }
+
+  Future<void> _cargarFotoPerfil() async {
+    setState(() => _cargandoFoto = true);
+    
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final usuario = authProvider.usuario;
+      
+      // Verificar si el usuario tiene referencia a foto en MySQL
+      if (usuario?.urlFotoPerfil != null &&
+          usuario!.urlFotoPerfil!.startsWith('mongodb://foto_usuario_')) {
+        
+        // Cargar la foto desde MongoDB
+        final response = await _apiService.get('/api/fotos-perfil/mi-foto');
+        if (response['success'] && response['data'] != null) {
+          setState(() {
+            _fotoPerfil = response['data']['imagen_url'];
+          });
+          print('✅ Foto de perfil cargada en el panel');
+        }
+      } else {
+        print('ℹ️ Usuario no tiene foto de perfil');
+        setState(() => _fotoPerfil = null);
+      }
+    } catch (e) {
+      print('❌ Error al cargar foto de perfil: $e');
+      setState(() => _fotoPerfil = null);
+    } finally {
+      setState(() => _cargandoFoto = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,10 +78,22 @@ class PanelScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Panel de Control'),
-        backgroundColor: Colors.indigo,
+        backgroundColor: const Color(0xFF16A34A), // Verde medio
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () async {
+              // Navegar a perfil y esperar el resultado
+              await Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const PerfilScreen()),
+              );
+              // Cuando vuelve, refrescar datos
+              _cargarDatosUsuario();
+            },
+            tooltip: 'Mi Perfil',
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
@@ -32,33 +108,58 @@ class PanelScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Container(
-        color: Colors.grey.shade100,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+      body: RefreshIndicator(
+        onRefresh: _cargarDatosUsuario,
+        child: Container(
+          color: Colors.grey.shade100,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
               // Header con info del usuario
               Container(
-                color: Colors.indigo,
+                color: const Color(0xFF16A34A), // Verde medio
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
-                    CircleAvatar(
-                      radius: 40,
-                      backgroundColor: Colors.white,
-                      child: Text(
-                        _getInitials(usuario?['Nombres'], usuario?['Apellidos']),
-                        style: const TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.indigo,
+                    // Foto de perfil o iniciales
+                    Stack(
+                      children: [
+                        CircleAvatar(
+                          radius: 50,
+                          backgroundColor: Colors.white,
+                          backgroundImage: _fotoPerfil != null
+                              ? MemoryImage(
+                                  Uri.parse(_fotoPerfil!).data!.contentAsBytes(),
+                                )
+                              : null,
+                          child: _fotoPerfil == null
+                              ? Text(
+                                  _getInitials(usuario?.nombres, usuario?.apellidos),
+                                  style: const TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF16A34A),
+                                  ),
+                                )
+                              : null,
                         ),
-                      ),
+                        if (_cargandoFoto)
+                          Positioned.fill(
+                            child: CircleAvatar(
+                              radius: 50,
+                              backgroundColor: Colors.black26,
+                              child: const CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      '${usuario?['Nombres'] ?? ''} ${usuario?['Apellidos'] ?? ''}',
+                      '${usuario?.nombres ?? ''} ${usuario?.apellidos ?? ''}',
                       style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -74,7 +175,7 @@ class PanelScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        authProvider.getRolNombre(usuario?['ID_rol']),
+                        authProvider.getRolNombre(usuario?.idRol),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14,
@@ -104,7 +205,7 @@ class PanelScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '¡Bienvenido, ${usuario?['Nombres'] ?? 'Usuario'}! 👋',
+                      '¡Bienvenido, ${usuario?.nombres ?? 'Usuario'}! 👋',
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -132,10 +233,10 @@ class PanelScreen extends StatelessWidget {
                       icon: Icons.person,
                       color: Colors.indigo,
                       title: 'Mi Perfil',
-                      subtitle: usuario?['Email_personal'] ?? 'Sin email',
+                      subtitle: usuario?.emailPersonal ?? 'Sin email',
                       details: [
-                        'Usuario: ${usuario?['Usuario_nombre'] ?? ''}',
-                        'Estado: ${usuario?['Estado'] ?? ''}',
+                        'Usuario: ${usuario?.usuarioNombre ?? ''}',
+                        'Estado: ${usuario?.estado ?? ''}',
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -145,9 +246,9 @@ class PanelScreen extends StatelessWidget {
                       icon: Icons.shield,
                       color: Colors.purple,
                       title: 'Rol',
-                      subtitle: authProvider.getRolNombre(usuario?['ID_rol']),
+                      subtitle: authProvider.getRolNombre(usuario?.idRol),
                       details: [
-                        authProvider.getRolDescripcion(usuario?['ID_rol']),
+                        authProvider.getRolDescripcion(usuario?.idRol),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -157,7 +258,7 @@ class PanelScreen extends StatelessWidget {
                       icon: Icons.access_time,
                       color: Colors.green,
                       title: 'Horas de Voluntariado',
-                      subtitle: '${usuario?['Horas_voluntariado_acumuladas'] ?? 0} horas',
+                      subtitle: '${usuario?.horasVoluntariadoAcumuladas ?? 0} horas',
                       details: const [
                         'Horas acumuladas en eventos',
                       ],
@@ -173,6 +274,7 @@ class PanelScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }
@@ -245,7 +347,7 @@ class PanelScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailCard(BuildContext context, Map<String, dynamic>? usuario) {
+  Widget _buildDetailCard(BuildContext context, Usuario? usuario) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -270,13 +372,13 @@ class PanelScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          _buildDetailRow('Email Personal', usuario?['Email_personal'] ?? 'No proporcionado'),
-          _buildDetailRow('Email Académico', usuario?['Email_academico'] ?? 'No proporcionado'),
-          _buildDetailRow('Teléfono', usuario?['Telefono'] ?? 'No proporcionado'),
-          _buildDetailRow('Es Estudiante', usuario?['Es_estudiante'] == 1 ? 'Sí' : 'No'),
+          _buildDetailRow('Email Personal', usuario?.emailPersonal ?? 'No proporcionado'),
+          _buildDetailRow('Email Académico', usuario?.emailAcademico ?? 'No proporcionado'),
+          _buildDetailRow('Teléfono', usuario?.telefono ?? 'No proporcionado'),
+          _buildDetailRow('Es Estudiante', usuario?.esEstudiante == 1 ? 'Sí' : 'No'),
           _buildDetailRow(
             'Verificado',
-            usuario?['Esta_verificado'] == 1 ? '✓ Verificado' : 'Pendiente',
+            usuario?.estaVerificado == 1 ? '✓ Verificado' : 'Pendiente',
           ),
         ],
       ),

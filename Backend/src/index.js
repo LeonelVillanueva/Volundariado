@@ -40,8 +40,8 @@ app.use(cors({
 }));
 
 app.use(morgan('dev')); // Logger
-app.use(express.json()); // Parse JSON
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded
+app.use(express.json({ limit: '50mb' })); // Parse JSON con límite de 50MB
+app.use(express.urlencoded({ extended: true, limit: '50mb' })); // Parse URL-encoded con límite de 50MB
 
 // Importar rutas centralizadas
 const apiRoutes = require('./routes');

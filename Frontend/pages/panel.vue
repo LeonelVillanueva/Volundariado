@@ -136,20 +136,89 @@ definePageMeta({
 });
 
 const usuario = ref(null);
+const cargando = ref(true);
 
-// Verificar autenticación inmediatamente
-if (process.client) {
+// Cargar datos actualizados del usuario desde el backend
+const cargarDatosUsuario = async () => {
+  if (!process.client) return;
+  
   const token = localStorage.getItem('token');
-  const usuarioGuardado = localStorage.getItem('usuario');
-
-  if (!token || !usuarioGuardado) {
-    // No hay sesión, redirigir a login
+  
+  if (!token) {
     window.location.href = '/';
-  } else {
-    // Hay sesión, cargar usuario
-    usuario.value = JSON.parse(usuarioGuardado);
+    return;
   }
-}
+
+  try {
+    const response = await fetch('http://localhost:3000/api/auth/perfil', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success) {
+        usuario.value = data.data;
+        // Actualizar localStorage con datos más recientes
+        localStorage.setItem('usuario', JSON.stringify(data.data));
+        console.log('✅ Datos de usuario actualizados desde el backend');
+      }
+    } else if (response.status === 401) {
+      // Token inválido, cerrar sesión
+      console.log('❌ Token inválido, cerrando sesión');
+      localStorage.removeItem('token');
+      localStorage.removeItem('usuario');
+      window.location.href = '/';
+    }
+  } catch (error) {
+    console.error('Error al cargar datos del usuario:', error);
+    // Fallback: usar datos de localStorage
+    const usuarioGuardado = localStorage.getItem('usuario');
+    if (usuarioGuardado) {
+      usuario.value = JSON.parse(usuarioGuardado);
+    }
+  } finally {
+    cargando.value = false;
+  }
+};
+
+// Verificar autenticación y cargar datos al montar
+onMounted(() => {
+  if (process.client) {
+    const token = localStorage.getItem('token');
+    const usuarioGuardado = localStorage.getItem('usuario');
+
+    if (!token || !usuarioGuardado) {
+      // No hay sesión, redirigir a login
+      window.location.href = '/';
+    } else {
+      // Cargar datos del usuario desde localStorage primero (carga rápida)
+      usuario.value = JSON.parse(usuarioGuardado);
+      // Luego actualizar con datos del backend
+      cargarDatosUsuario();
+    }
+
+    // Escuchar cuando la ventana recupera el foco (cuando vuelves de otra pestaña/página)
+    window.addEventListener('focus', cargarDatosUsuario);
+    
+    // Escuchar evento de storage (cuando se actualiza en otra pestaña)
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'usuario' && e.newValue) {
+        usuario.value = JSON.parse(e.newValue);
+      }
+    });
+  }
+});
+
+// Limpiar listeners al desmontar
+onBeforeUnmount(() => {
+  if (process.client) {
+    window.removeEventListener('focus', cargarDatosUsuario);
+  }
+});
 
 // Ir a perfil
 const irAPerfil = () => {

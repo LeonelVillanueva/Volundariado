@@ -30,6 +30,12 @@ dependencies:
   
   # Environment variables
   flutter_dotenv: ^5.1.0
+  
+  # Image picker
+  image_picker: ^1.0.4
+  
+  # Image compression
+  flutter_image_compress: ^2.1.0
 
 dev_dependencies:
   flutter_test:

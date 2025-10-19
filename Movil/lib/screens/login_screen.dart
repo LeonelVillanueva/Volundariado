@@ -50,8 +50,8 @@ class _LoginScreenState extends State<LoginScreen> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Colors.blue.shade50,
-              Colors.indigo.shade100,
+              const Color(0xFFF0FDF4), // Verde muy claro
+              const Color(0xFFDCFCE7), // Verde claro
             ],
           ),
         ),
@@ -66,7 +66,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const Icon(
                     Icons.volunteer_activism,
                     size: 80,
-                    color: Colors.indigo,
+                    color: Color(0xFF16A34A), // Verde medio
                   ),
                   const SizedBox(height: 16),
                   const Text(
@@ -74,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
-                      color: Colors.indigo,
+                      color: Color(0xFF166534), // Verde oscuro
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -121,12 +121,16 @@ class _LoginScreenState extends State<LoginScreen> {
                             controller: _usuarioController,
                             decoration: InputDecoration(
                               labelText: 'Usuario',
-                              prefixIcon: const Icon(Icons.person),
+                              prefixIcon: const Icon(Icons.person, color: Color(0xFF16A34A)),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: Color(0xFF16A34A), width: 2),
+                              ),
                               filled: true,
-                              fillColor: Colors.grey.shade50,
+                              fillColor: const Color(0xFFF0FDF4),
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -143,10 +147,11 @@ class _LoginScreenState extends State<LoginScreen> {
                             obscureText: _obscurePassword,
                             decoration: InputDecoration(
                               labelText: 'Contraseña',
-                              prefixIcon: const Icon(Icons.lock),
+                              prefixIcon: const Icon(Icons.lock, color: Color(0xFF16A34A)),
                               suffixIcon: IconButton(
                                 icon: Icon(
                                   _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                                  color: const Color(0xFF16A34A),
                                 ),
                                 onPressed: () {
                                   setState(() {
@@ -157,8 +162,12 @@ class _LoginScreenState extends State<LoginScreen> {
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: Color(0xFF16A34A), width: 2),
+                              ),
                               filled: true,
-                              fillColor: Colors.grey.shade50,
+                              fillColor: const Color(0xFFF0FDF4),
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -198,12 +207,13 @@ class _LoginScreenState extends State<LoginScreen> {
                               return ElevatedButton(
                                 onPressed: auth.isLoading ? null : _handleLogin,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.indigo,
+                                  backgroundColor: const Color(0xFF16A34A), // Verde medio
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(vertical: 16),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
+                                  elevation: 3,
                                 ),
                                 child: auth.isLoading
                                     ? const SizedBox(
@@ -231,34 +241,34 @@ class _LoginScreenState extends State<LoginScreen> {
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.grey.shade100,
+                              color: const Color(0xFFD1FAE5), // Verde muy claro
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.grey.shade300),
+                              border: Border.all(color: const Color(0xFF86EFAC)), // Verde claro
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
+                                const Text(
                                   'Credenciales de prueba:',
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.grey.shade700,
+                                    color: Color(0xFF166534), // Verde oscuro
                                   ),
                                 ),
                                 const SizedBox(height: 8),
-                                Text(
+                                const Text(
                                   'Usuario: admin',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.grey.shade800,
+                                    color: Color(0xFF166534),
                                   ),
                                 ),
-                                Text(
+                                const Text(
                                   'Contraseña: admin123',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.grey.shade800,
+                                    color: Color(0xFF166534),
                                   ),
                                 ),
                               ],

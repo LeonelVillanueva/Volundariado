@@ -93,6 +93,46 @@ class ApiService {
       throw _handleError(e);
     }
   }
+
+  /// Método genérico GET
+  Future<Map<String, dynamic>> get(String endpoint) async {
+    try {
+      final response = await _dio.get(endpoint);
+      return response.data;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// Método genérico POST
+  Future<Map<String, dynamic>> post(String endpoint, Map<String, dynamic> data) async {
+    try {
+      final response = await _dio.post(endpoint, data: data);
+      return response.data;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// Método genérico PUT
+  Future<Map<String, dynamic>> put(String endpoint, Map<String, dynamic> data) async {
+    try {
+      final response = await _dio.put(endpoint, data: data);
+      return response.data;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// Método genérico DELETE
+  Future<Map<String, dynamic>> delete(String endpoint) async {
+    try {
+      final response = await _dio.delete(endpoint);
+      return response.data;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
   
   /// Manejo de errores
   String _handleError(DioException e) {

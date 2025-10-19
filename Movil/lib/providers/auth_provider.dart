@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../services/api_service.dart';
+import '../models/usuario.dart';
 
 /// Provider para manejar autenticación
 class AuthProvider with ChangeNotifier {
@@ -10,12 +11,12 @@ class AuthProvider with ChangeNotifier {
   bool _isAuthenticated = false;
   bool _isLoading = false;
   String? _error;
-  Map<String, dynamic>? _usuario;
+  Usuario? _usuario;
   
   bool get isAuthenticated => _isAuthenticated;
   bool get isLoading => _isLoading;
   String? get error => _error;
-  Map<String, dynamic>? get usuario => _usuario;
+  Usuario? get usuario => _usuario;
   
   /// Verificar si hay sesión guardada
   Future<void> verificarSesion() async {
@@ -25,7 +26,8 @@ class AuthProvider with ChangeNotifier {
       final usuarioJson = prefs.getString('usuario');
       
       if (token != null && usuarioJson != null) {
-        _usuario = json.decode(usuarioJson);
+        final usuarioData = json.decode(usuarioJson);
+        _usuario = Usuario.fromJson(usuarioData);
         _isAuthenticated = true;
         notifyListeners();
       }
@@ -45,12 +47,12 @@ class AuthProvider with ChangeNotifier {
       
       if (response['success'] == true) {
         final token = response['data']['token'];
-        _usuario = response['data']['usuario'];
+        _usuario = Usuario.fromJson(response['data']['usuario']);
         
         // Guardar en SharedPreferences
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', token);
-        await prefs.setString('usuario', json.encode(_usuario));
+        await prefs.setString('usuario', json.encode(_usuario!.toJson()));
         
         // Guardar token en ApiService
         await _apiService.saveToken(token);
@@ -86,6 +88,19 @@ class AuthProvider with ChangeNotifier {
   void clearError() {
     _error = null;
     notifyListeners();
+  }
+
+  /// Actualizar datos del usuario
+  Future<void> actualizarUsuario(Map<String, dynamic> datosUsuario) async {
+    if (_usuario != null) {
+      _usuario = Usuario.fromJson(datosUsuario);
+      
+      // Actualizar en SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('usuario', json.encode(_usuario!.toJson()));
+      
+      notifyListeners();
+    }
   }
   
   /// Obtener nombre del rol
