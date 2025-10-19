@@ -1,30 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const centroEducativoController = require('../controllers/centroEducativoController');
-const { verificarAutenticacion, verificarRol } = require('../middleware/auth');
+const { verificarAutenticacion } = require('../middleware/auth');
 
-/**
- * Rutas de Centros Educativos
- * Base: /api/centros
- */
+// Rutas públicas (requieren autenticación)
+router.get('/', verificarAutenticacion, centroEducativoController.obtenerTodos);
+router.get('/buscar', verificarAutenticacion, centroEducativoController.buscar);
+router.get('/:id', verificarAutenticacion, centroEducativoController.obtenerPorId);
 
-// Obtener todos los centros (público)
-router.get('/', centroEducativoController.obtenerTodos);
+// Rutas para docentes
+router.post('/', verificarAutenticacion, centroEducativoController.crear);
+router.put('/:id', verificarAutenticacion, centroEducativoController.actualizar);
+router.get('/:id/estudiantes', verificarAutenticacion, centroEducativoController.obtenerEstudiantes);
 
-// Buscar centros (público)
-router.get('/buscar', centroEducativoController.buscar);
-
-// Obtener centro por ID (público)
-router.get('/:id', centroEducativoController.obtenerPorId);
-
-// Crear centro (requiere autenticación y rol admin)
-router.post('/', verificarAutenticacion, verificarRol(6), centroEducativoController.crear);
-
-// Actualizar centro (requiere autenticación y rol admin)
-router.put('/:id', verificarAutenticacion, verificarRol(6), centroEducativoController.actualizar);
-
-// Eliminar centro (requiere autenticación y rol admin)
-router.delete('/:id', verificarAutenticacion, verificarRol(6), centroEducativoController.eliminar);
+// Rutas para administradores
+router.delete('/:id', verificarAutenticacion, centroEducativoController.eliminar);
 
 module.exports = router;
-

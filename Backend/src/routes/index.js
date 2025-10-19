@@ -12,6 +12,7 @@ const centroEducativoRoutes = require('./centroEducativoRoutes');
 const carreraRoutes = require('./carreraRoutes');
 const permisoRoutes = require('./permisoRoutes');
 const fotoPerfilRoutes = require('./fotoPerfilRoutes');
+const verificacionRoutes = require('./verificacionRoutes');
 
 /**
  * Configuración central de todas las rutas de la API
@@ -34,7 +35,8 @@ router.get('/', (req, res) => {
       centros: '/api/centros',
       carreras: '/api/carreras',
       permisos: '/api/permisos',
-      fotos_perfil: '/api/fotos-perfil'
+      fotos_perfil: '/api/fotos-perfil',
+      verificacion: '/api/verificacion'
     },
     documentacion: {
       postman: 'Importa la colección de Postman para ver todos los endpoints',
@@ -72,6 +74,9 @@ router.use('/permisos', permisoRoutes);
 
 // Rutas de fotos de perfil (MongoDB)
 router.use('/fotos-perfil', fotoPerfilRoutes);
+
+// Rutas de verificación de estudiantes
+router.use('/verificacion', verificacionRoutes);
 
 module.exports = router;
 

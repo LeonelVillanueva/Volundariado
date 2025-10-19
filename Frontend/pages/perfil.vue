@@ -340,8 +340,8 @@ onMounted(async () => {
     
     cargarPerfil();
     cargarCentrosEducativos();
-    cargarCarreras();
     cargarFotoPerfil();
+    // Las carreras se cargarán cuando se seleccione un centro
   }
 });
 
@@ -383,6 +383,11 @@ const cargarPerfil = async () => {
         Num_cuenta: data.data.Num_cuenta || '',
         ID_carrera: data.data.ID_carrera,
       };
+      
+      // Cargar carreras del centro si ya tiene uno seleccionado
+      if (data.data.ID_centro_educativo) {
+        await cargarCarrerasCentro(data.data.ID_centro_educativo);
+      }
     }
   } catch (error) {
     console.error('Error al cargar perfil:', error);
@@ -393,7 +398,13 @@ const cargarPerfil = async () => {
 // Cargar centros educativos
 const cargarCentrosEducativos = async () => {
   try {
-    const response = await fetch('http://localhost:3000/api/centros-educativos');
+    const token = localStorage.getItem('token');
+    const response = await fetch('http://localhost:3000/api/centros', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
     const data = await response.json();
     
     if (data.success) {
@@ -404,24 +415,44 @@ const cargarCentrosEducativos = async () => {
   }
 };
 
-// Cargar carreras
-const cargarCarreras = async () => {
+// Cargar carreras del centro seleccionado
+const cargarCarrerasCentro = async (idCentro) => {
+  if (!idCentro) {
+    carreras.value = [];
+    return;
+  }
+  
   try {
-    const response = await fetch('http://localhost:3000/api/carreras');
+    const token = localStorage.getItem('token');
+    const response = await fetch(`http://localhost:3000/api/carreras/centro/${idCentro}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
     const data = await response.json();
     
     if (data.success) {
       carreras.value = data.data;
     }
   } catch (error) {
-    console.error('Error al cargar carreras:', error);
+    console.error('Error al cargar carreras del centro:', error);
+    carreras.value = [];
   }
 };
 
 // Carreras filtradas por centro educativo
 const carrerasFiltradas = computed(() => {
-  if (!form.value.ID_centro_educativo) return [];
-  return carreras.value.filter(c => c.ID_centro_educativo === form.value.ID_centro_educativo);
+  return carreras.value;
+});
+
+// Watch para cargar carreras cuando cambia el centro
+watch(() => form.value.ID_centro_educativo, (nuevoCentro) => {
+  if (nuevoCentro) {
+    cargarCarrerasCentro(nuevoCentro);
+  } else {
+    carreras.value = [];
+  }
 });
 
 // Actualizar perfil

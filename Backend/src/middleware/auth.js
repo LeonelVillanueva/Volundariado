@@ -52,11 +52,12 @@ exports.verificarAutenticacion = async (req, res, next) => {
       });
     }
 
-    // Agregar información del usuario al request
+    // Agregar información del usuario al request (incluyendo datos actualizados de la BD)
     req.usuario = {
       id: decoded.id,
       usuario_nombre: decoded.usuario_nombre,
-      id_rol: decoded.id_rol
+      id_rol: usuario.ID_rol, // Usar el rol de la BD (puede haber cambiado)
+      id_centro_educativo: usuario.ID_centro_educativo // Agregar centro educativo
     };
 
     next();
