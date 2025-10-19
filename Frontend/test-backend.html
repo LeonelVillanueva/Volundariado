@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Backend</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #4F46E5;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #4338CA;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            background: #f0f0f0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test de Conexión al Backend</h1>
+        <p>Este archivo prueba la conexión con el backend en <code>http://localhost:3000</code></p>
+
+        <h2>Pruebas:</h2>
+        
+        <button onclick="testBackend()">1. Probar Backend (GET /)</button>
+        <button onclick="testAPI()">2. Probar API (GET /api)</button>
+        <button onclick="testLogin()">3. Probar Login (POST /api/auth/login)</button>
+        <button onclick="clearResult()">Limpiar Resultado</button>
+
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        const resultDiv = document.getElementById('result');
+
+        function clearResult() {
+            resultDiv.textContent = '';
+            resultDiv.className = 'result';
+        }
+
+        async function testBackend() {
+            resultDiv.textContent = 'Probando conexión al backend...';
+            try {
+                const response = await fetch('http://localhost:3000');
+                const data = await response.json();
+                resultDiv.className = 'result success';
+                resultDiv.textContent = '✅ BACKEND FUNCIONA!\n\n' + JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ ERROR: No se pudo conectar al backend\n\n' + 
+                    'Verifica que el backend esté corriendo en http://localhost:3000\n\n' +
+                    'Error: ' + error.message;
+            }
+        }
+
+        async function testAPI() {
+            resultDiv.textContent = 'Probando endpoint /api...';
+            try {
+                const response = await fetch('http://localhost:3000/api');
+                const data = await response.json();
+                resultDiv.className = 'result success';
+                resultDiv.textContent = '✅ API FUNCIONA!\n\n' + JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ ERROR: No se pudo conectar a /api\n\n' +
+                    'Error: ' + error.message;
+            }
+        }
+
+        async function testLogin() {
+            resultDiv.textContent = 'Probando login con admin/admin123...';
+            try {
+                const response = await fetch('http://localhost:3000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        usuario_nombre: 'admin',
+                        clave: 'admin123'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = '✅ LOGIN EXITOSO!\n\n' +
+                        'Token recibido: ' + data.data.token.substring(0, 50) + '...\n\n' +
+                        'Usuario: ' + data.data.usuario.Nombres + ' ' + data.data.usuario.Apellidos + '\n' +
+                        'Rol ID: ' + data.data.usuario.ID_rol + '\n\n' +
+                        'Respuesta completa:\n' + JSON.stringify(data, null, 2);
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = '❌ LOGIN FALLÓ\n\n' + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ ERROR AL HACER LOGIN\n\n' +
+                    'No se pudo conectar con http://localhost:3000/api/auth/login\n\n' +
+                    'Error: ' + error.message + '\n\n' +
+                    '¿El backend está corriendo?';
+            }
+        }
+
+        // Test automático al cargar
+        window.onload = () => {
+            testBackend();
+        };
+    </script>
+</body>
+</html>
+
