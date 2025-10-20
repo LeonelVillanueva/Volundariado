@@ -4,11 +4,7 @@
       <!-- Logo/Título -->
       <div class="text-center mb-8">
         <div class="flex items-center justify-center mb-4">
-          <div class="p-4 bg-primary-600 rounded-full shadow-lg">
-            <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-            </svg>
-          </div>
+          <img :src="`/images/logo.png?v=${Date.now()}`" alt="Logo Voluntariado" class="w-32 h-32" />
         </div>
         <h1 class="text-4xl font-bold text-primary-700 mb-2">Voluntariado</h1>
         <p class="text-primary-600 font-medium">Sistema de Gestión de Eventos</p>

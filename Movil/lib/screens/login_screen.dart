@@ -63,10 +63,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   // Logo/Título
-                  const Icon(
-                    Icons.volunteer_activism,
-                    size: 80,
-                    color: Color(0xFF16A34A), // Verde medio
+                  Image.asset(
+                    'assets/images/logo.png',
+                    width: 100,
+                    height: 100,
                   ),
                   const SizedBox(height: 16),
                   const Text(

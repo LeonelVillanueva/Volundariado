@@ -88,27 +88,27 @@ class _SplashScreenState extends State<SplashScreen> {
             ],
           ),
         ),
-        child: const Center(
+        child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.volunteer_activism,
-                size: 100,
-                color: Colors.indigo,
+              Image.asset(
+                'assets/images/logo.png',
+                width: 120,
+                height: 120,
               ),
-              SizedBox(height: 24),
-              Text(
+              const SizedBox(height: 24),
+              const Text(
                 'Voluntariado',
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
-                  color: Colors.indigo,
+                  color: Color(0xFF16A34A),
                 ),
               ),
-              SizedBox(height: 16),
-              CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.indigo),
+              const SizedBox(height: 16),
+              const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF16A34A)),
               ),
             ],
           ),
