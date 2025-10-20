@@ -8,8 +8,11 @@ const { verificarAutenticacion } = require('../middleware/auth');
  * Base: /api/auth
  */
 
-// Registrar nuevo usuario
+// Registrar nuevo usuario (método antiguo)
 router.post('/registrar', authController.registrar);
+
+// Registro público (nuevo método con centros educativos)
+router.post('/registro', authController.registro);
 
 // Iniciar sesión
 router.post('/login', authController.login);

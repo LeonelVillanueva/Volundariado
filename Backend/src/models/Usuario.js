@@ -34,12 +34,14 @@ class Usuario {
           Num_cuenta VARCHAR(35) NULL COMMENT 'Número de cuenta estudiantil',
           ID_carrera INT NULL COMMENT 'ID de la carrera que estudia',
           Estado VARCHAR(20) DEFAULT 'Activo' COMMENT 'Estado del usuario (Activo, Inactivo, Suspendido)',
+          Estado_aprobacion VARCHAR(20) DEFAULT 'Aprobado' COMMENT 'Estado de aprobación (Pendiente, Aprobado, Rechazado) - Solo para docentes',
           Url_foto_perfil VARCHAR(255) NULL COMMENT 'URL de la foto de perfil',
           Esta_verificado BOOLEAN DEFAULT FALSE COMMENT 'Indica si el usuario ha verificado su cuenta',
           Horas_voluntariado_acumuladas INT DEFAULT 0 COMMENT 'Total de horas de voluntariado acumuladas',
           Usuario_nombre VARCHAR(150) NULL UNIQUE COMMENT 'Nombre de usuario para login',
           Clave VARCHAR(150) NULL COMMENT 'Contraseña encriptada',
           ID_rol INT NOT NULL COMMENT 'ID del rol del usuario',
+          Configuracion_privacidad JSON NULL COMMENT 'Configuración de privacidad del usuario',
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Fecha de creación del registro',
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Fecha de última actualización',
           
@@ -47,6 +49,7 @@ class Usuario {
           INDEX idx_email_academico (Email_academico),
           INDEX idx_usuario_nombre (Usuario_nombre),
           INDEX idx_estado (Estado),
+          INDEX idx_estado_aprobacion (Estado_aprobacion),
           INDEX idx_es_estudiante (Es_estudiante),
           INDEX idx_rol (ID_rol),
           INDEX idx_centro_educativo (ID_centro_educativo),
@@ -92,6 +95,7 @@ class Usuario {
       num_cuenta = null,
       id_carrera = null,
       estado = 'Activo',
+      estado_aprobacion = 'Aprobado',
       url_foto_perfil = null,
       esta_verificado = false,
       horas_voluntariado_acumuladas = 0,
@@ -104,15 +108,15 @@ class Usuario {
       INSERT INTO Usuarios (
         Nombres, Apellidos, Email_personal, Email_academico, Telefono,
         Fecha_nacimiento, Es_estudiante, ID_centro_educativo, Num_cuenta,
-        ID_carrera, Estado, Url_foto_perfil, Esta_verificado,
+        ID_carrera, Estado, Estado_aprobacion, Url_foto_perfil, Esta_verificado,
         Horas_voluntariado_acumuladas, Usuario_nombre, Clave, ID_rol
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const valores = [
       nombres, apellidos, email_personal, email_academico, telefono,
       fecha_nacimiento, es_estudiante, id_centro_educativo, num_cuenta,
-      id_carrera, estado, url_foto_perfil, esta_verificado,
+      id_carrera, estado, estado_aprobacion, url_foto_perfil, esta_verificado,
       horas_voluntariado_acumuladas, usuario_nombre, clave, id_rol
     ];
 
@@ -238,22 +242,37 @@ class Usuario {
    * @returns {Promise<boolean>} true si se actualizó correctamente
    */
   static async actualizar(id, datos) {
-    const camposPermitidos = [
-      'Nombres', 'Apellidos', 'Email_personal', 'Email_academico', 'Telefono',
-      'Fecha_nacimiento', 'Es_estudiante', 'ID_centro_educativo', 'Num_cuenta',
-      'ID_carrera', 'Estado', 'Url_foto_perfil', 'Esta_verificado',
-      'Horas_voluntariado_acumuladas', 'Usuario_nombre', 'Clave', 'ID_rol'
-    ];
+    // Mapeo de nombres de campos de snake_case a nombres de columnas MySQL
+    const mapaCampos = {
+      'nombres': 'Nombres',
+      'apellidos': 'Apellidos',
+      'email_personal': 'Email_personal',
+      'email_academico': 'Email_academico',
+      'telefono': 'Telefono',
+      'fecha_nacimiento': 'Fecha_nacimiento',
+      'es_estudiante': 'Es_estudiante',
+      'id_centro_educativo': 'ID_centro_educativo',
+      'num_cuenta': 'Num_cuenta',
+      'id_carrera': 'ID_carrera',
+      'estado': 'Estado',
+      'estado_aprobacion': 'Estado_aprobacion',
+      'url_foto_perfil': 'Url_foto_perfil',
+      'esta_verificado': 'Esta_verificado',
+      'horas_voluntariado_acumuladas': 'Horas_voluntariado_acumuladas',
+      'usuario_nombre': 'Usuario_nombre',
+      'clave': 'Clave',
+      'id_rol': 'ID_rol'
+    };
 
     const campos = [];
     const valores = [];
 
     // Construir la consulta dinámicamente solo con los campos proporcionados
     for (const [key, value] of Object.entries(datos)) {
-      const campo = key.charAt(0).toUpperCase() + key.slice(1).replace(/_([a-z])/g, (_, letra) => '_' + letra);
+      const campoMySQL = mapaCampos[key.toLowerCase()];
       
-      if (camposPermitidos.includes(campo)) {
-        campos.push(`${campo} = ?`);
+      if (campoMySQL) {
+        campos.push(`${campoMySQL} = ?`);
         valores.push(value);
       }
     }
@@ -403,6 +422,139 @@ class Usuario {
       return usuarios;
     } catch (error) {
       console.error('Error al buscar usuarios:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Obtener configuración de privacidad por defecto
+   */
+  static getConfiguracionPrivacidadPorDefecto() {
+    return {
+      perfil_publico: true,
+      mostrar_email_personal: false,
+      mostrar_email_academico: false,
+      mostrar_telefono: false,
+      mostrar_fecha_nacimiento: false,
+      mostrar_centro_educativo: true,
+      mostrar_carrera: true,
+      mostrar_horas_voluntariado: true
+    };
+  }
+
+  /**
+   * Obtener configuración de privacidad de un usuario
+   */
+  static getPrivacidad(usuario) {
+    try {
+      if (!usuario.Configuracion_privacidad) {
+        return this.getConfiguracionPrivacidadPorDefecto();
+      }
+      
+      // Si es string JSON, parsearlo
+      if (typeof usuario.Configuracion_privacidad === 'string') {
+        return JSON.parse(usuario.Configuracion_privacidad);
+      }
+      
+      // Si ya es objeto, retornarlo
+      return usuario.Configuracion_privacidad;
+    } catch (error) {
+      console.error('Error al parsear configuración de privacidad:', error);
+      return this.getConfiguracionPrivacidadPorDefecto();
+    }
+  }
+
+  /**
+   * Actualizar configuración de privacidad
+   */
+  static async actualizarPrivacidad(id, configuracion) {
+    try {
+      const query = 'UPDATE Usuarios SET Configuracion_privacidad = ? WHERE ID = ?';
+      const [resultado] = await pool.execute(query, [JSON.stringify(configuracion), id]);
+      return resultado.affectedRows > 0;
+    } catch (error) {
+      console.error('Error al actualizar configuración de privacidad:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Obtener perfil público de un usuario (filtrado según privacidad)
+   * @param {number} id_usuario - ID del usuario a obtener
+   * @param {number} id_solicitante - ID del usuario que solicita (para verificar si es él mismo)
+   * @param {number} id_rol_solicitante - Rol del usuario que solicita
+   */
+  static async obtenerPerfilPublico(id_usuario, id_solicitante = null, id_rol_solicitante = null) {
+    try {
+      const usuario = await this.obtenerPorId(id_usuario);
+      
+      if (!usuario) {
+        return null;
+      }
+
+      // Si el solicitante es el mismo usuario, mostrar todo
+      if (id_solicitante === id_usuario) {
+        return usuario;
+      }
+
+      // Si el solicitante es Docente (4) o Administrador (6), mostrar todo
+      if (id_rol_solicitante === 4 || id_rol_solicitante === 6) {
+        return usuario;
+      }
+
+      const config = this.getPrivacidad(usuario);
+
+      // Si el perfil no es público, retornar solo información básica
+      if (!config.perfil_publico) {
+        return {
+          ID: usuario.ID,
+          Nombres: usuario.Nombres,
+          Apellidos: usuario.Apellidos,
+          Url_foto_perfil: usuario.Url_foto_perfil,
+          ID_rol: usuario.ID_rol,
+          perfil_privado: true
+        };
+      }
+
+      // Construir perfil filtrado según configuración
+      const perfilFiltrado = {
+        ID: usuario.ID,
+        Nombres: usuario.Nombres,
+        Apellidos: usuario.Apellidos,
+        Usuario_nombre: usuario.Usuario_nombre,
+        Url_foto_perfil: usuario.Url_foto_perfil,
+        ID_rol: usuario.ID_rol,
+        Estado: usuario.Estado,
+        Esta_verificado: usuario.Esta_verificado,
+        Es_estudiante: usuario.Es_estudiante
+      };
+
+      // Agregar campos según configuración de privacidad
+      if (config.mostrar_email_personal) {
+        perfilFiltrado.Email_personal = usuario.Email_personal;
+      }
+      if (config.mostrar_email_academico) {
+        perfilFiltrado.Email_academico = usuario.Email_academico;
+      }
+      if (config.mostrar_telefono) {
+        perfilFiltrado.Telefono = usuario.Telefono;
+      }
+      if (config.mostrar_fecha_nacimiento) {
+        perfilFiltrado.Fecha_nacimiento = usuario.Fecha_nacimiento;
+      }
+      if (config.mostrar_centro_educativo) {
+        perfilFiltrado.ID_centro_educativo = usuario.ID_centro_educativo;
+      }
+      if (config.mostrar_carrera) {
+        perfilFiltrado.ID_carrera = usuario.ID_carrera;
+      }
+      if (config.mostrar_horas_voluntariado) {
+        perfilFiltrado.Horas_voluntariado_acumuladas = usuario.Horas_voluntariado_acumuladas;
+      }
+
+      return perfilFiltrado;
+    } catch (error) {
+      console.error('Error al obtener perfil público:', error);
       throw error;
     }
   }

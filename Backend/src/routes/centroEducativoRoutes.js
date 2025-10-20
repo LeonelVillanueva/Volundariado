@@ -3,7 +3,10 @@ const router = express.Router();
 const centroEducativoController = require('../controllers/centroEducativoController');
 const { verificarAutenticacion } = require('../middleware/auth');
 
-// Rutas públicas (requieren autenticación)
+// Ruta pública (sin autenticación, para registro de docentes)
+router.get('/publico', centroEducativoController.obtenerTodos);
+
+// Rutas que requieren autenticación
 router.get('/', verificarAutenticacion, centroEducativoController.obtenerTodos);
 router.get('/buscar', verificarAutenticacion, centroEducativoController.buscar);
 router.get('/:id', verificarAutenticacion, centroEducativoController.obtenerPorId);

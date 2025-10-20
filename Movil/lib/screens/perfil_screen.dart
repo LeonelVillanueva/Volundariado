@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'dart:io';
 import 'dart:convert';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
@@ -25,13 +24,25 @@ class _PerfilScreenState extends State<PerfilScreen> {
   // Variables de estado
   Usuario? _usuario;
   List<CentroEducativo> _centrosEducativos = [];
-  List<Carrera> _carreras = [];
   List<Carrera> _carrerasFiltradas = [];
   bool _cargando = false;
   bool _cargandoFoto = false;
+  bool _modoEdicion = false;
   String? _fotoPerfil;
   String? _mensaje;
   bool _esExito = true;
+  
+  // Configuración de privacidad
+  Map<String, dynamic> _privacidad = {
+    'perfil_publico': true,
+    'mostrar_email_personal': false,
+    'mostrar_email_academico': false,
+    'mostrar_telefono': false,
+    'mostrar_fecha_nacimiento': false,
+    'mostrar_centro_educativo': true,
+    'mostrar_carrera': true,
+    'mostrar_horas_voluntariado': true,
+  };
 
   // Controladores del formulario
   final _nombresController = TextEditingController();
@@ -87,8 +98,10 @@ class _PerfilScreenState extends State<PerfilScreen> {
       // Cargar centros educativos
       await _cargarCentrosEducativos();
       
-      // Cargar carreras
-      await _cargarCarreras();
+      // Cargar configuración de privacidad
+      await _cargarPrivacidad();
+      
+      // Las carreras se cargarán automáticamente en _llenarFormulario si ya tiene centro
       
     } catch (e) {
       print('Error al cargar datos del perfil: $e');
@@ -107,8 +120,8 @@ class _PerfilScreenState extends State<PerfilScreen> {
   void _llenarFormulario() {
     if (_usuario == null) return;
     
-    _nombresController.text = _usuario!.nombres ?? '';
-    _apellidosController.text = _usuario!.apellidos ?? '';
+    _nombresController.text = _usuario!.nombres;
+    _apellidosController.text = _usuario!.apellidos;
     _emailPersonalController.text = _usuario!.emailPersonal ?? '';
     _emailAcademicoController.text = _usuario!.emailAcademico ?? '';
     _telefonoController.text = _usuario!.telefono ?? '';
@@ -122,12 +135,15 @@ class _PerfilScreenState extends State<PerfilScreen> {
       _fechaNacimiento = DateTime.parse(_usuario!.fechaNacimiento!);
     }
     
-    _filtrarCarreras();
+    // Cargar carreras si ya tiene un centro seleccionado
+    if (_centroEducativoSeleccionado != null) {
+      _cargarCarrerasPorCentro(_centroEducativoSeleccionado!);
+    }
   }
 
   Future<void> _cargarCentrosEducativos() async {
     try {
-      final response = await _apiService.get('/api/centros-educativos');
+      final response = await _apiService.get('/api/centros');
       if (response['success']) {
         setState(() {
           _centrosEducativos = (response['data'] as List)
@@ -140,40 +156,41 @@ class _PerfilScreenState extends State<PerfilScreen> {
     }
   }
 
-  Future<void> _cargarCarreras() async {
+  Future<void> _cargarCarrerasPorCentro(int idCentro) async {
     try {
-      final response = await _apiService.get('/api/carreras');
+      final response = await _apiService.get('/api/carreras/centro/$idCentro');
       if (response['success']) {
         setState(() {
-          _carreras = (response['data'] as List)
+          _carrerasFiltradas = (response['data'] as List)
               .map((json) => Carrera.fromJson(json))
               .toList();
         });
-        _filtrarCarreras();
+        
+        // Si la carrera seleccionada no está en las filtradas, limpiarla
+        if (_carreraSeleccionada != null && 
+            !_carrerasFiltradas.any((c) => c.id == _carreraSeleccionada)) {
+          setState(() {
+            _carreraSeleccionada = null;
+          });
+        }
       }
     } catch (e) {
-      print('Error al cargar carreras: $e');
+      print('Error al cargar carreras del centro: $e');
+      setState(() {
+        _carrerasFiltradas = [];
+      });
     }
   }
 
-  void _filtrarCarreras() {
-    if (_centroEducativoSeleccionado != null) {
-      setState(() {
-        _carrerasFiltradas = _carreras
-            .where((c) => c.idCentroEducativo == _centroEducativoSeleccionado)
-            .toList();
-      });
-      
-      // Si la carrera seleccionada no está en las filtradas, limpiarla
-      if (_carreraSeleccionada != null && 
-          !_carrerasFiltradas.any((c) => c.id == _carreraSeleccionada)) {
-        _carreraSeleccionada = null;
-      }
-    } else {
-      setState(() {
-        _carrerasFiltradas = [];
-        _carreraSeleccionada = null;
-      });
+  void _onCentroEducativoChanged(int? nuevoCentro) {
+    setState(() {
+      _centroEducativoSeleccionado = nuevoCentro;
+      _carreraSeleccionada = null; // Limpiar carrera al cambiar de centro
+      _carrerasFiltradas = [];
+    });
+    
+    if (nuevoCentro != null) {
+      _cargarCarrerasPorCentro(nuevoCentro);
     }
   }
 
@@ -289,20 +306,30 @@ class _PerfilScreenState extends State<PerfilScreen> {
     }
   }
 
-  String _obtenerMimeType(String path) {
-    final extension = path.split('.').last.toLowerCase();
-    switch (extension) {
-      case 'jpg':
-      case 'jpeg':
-        return 'image/jpeg';
-      case 'png':
-        return 'image/png';
-      case 'gif':
-        return 'image/gif';
-      case 'webp':
-        return 'image/webp';
-      default:
-        return 'image/jpeg';
+
+  Future<void> _cargarPrivacidad() async {
+    try {
+      final response = await _apiService.get('/api/privacidad/mi-configuracion');
+      if (response['success']) {
+        setState(() {
+          _privacidad = Map<String, dynamic>.from(response['data']);
+        });
+      }
+    } catch (e) {
+      print('Error al cargar configuración de privacidad: $e');
+    }
+  }
+
+  Future<void> _guardarPrivacidad() async {
+    try {
+      final response = await _apiService.put('/api/privacidad/mi-configuracion', _privacidad);
+      if (response['success']) {
+        _mostrarMensaje('Configuración de privacidad actualizada', true);
+      } else {
+        _mostrarMensaje(response['mensaje'] ?? 'Error al guardar privacidad', false);
+      }
+    } catch (e) {
+      _mostrarMensaje('Error al guardar privacidad: $e', false);
     }
   }
 
@@ -333,6 +360,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
         await authProvider.actualizarUsuario(response['data']);
         
         _mostrarMensaje('Perfil actualizado exitosamente', true);
+        setState(() => _modoEdicion = false); // Desactivar modo edición
       } else {
         _mostrarMensaje(response['mensaje'] ?? 'Error al actualizar perfil', false);
       }
@@ -398,6 +426,24 @@ class _PerfilScreenState extends State<PerfilScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              _modoEdicion ? Icons.close : Icons.edit,
+              color: Colors.white,
+            ),
+            onPressed: () {
+              setState(() {
+                if (_modoEdicion) {
+                  // Cancelar: recargar datos
+                  _cargarDatos();
+                }
+                _modoEdicion = !_modoEdicion;
+              });
+            },
+            tooltip: _modoEdicion ? 'Cancelar' : 'Editar',
+          ),
+        ],
       ),
       body: _cargando
           ? const Center(child: CircularProgressIndicator())
@@ -459,10 +505,131 @@ class _PerfilScreenState extends State<PerfilScreen> {
                                 // Datos de estudiante
                                 if (_esEstudiante) _buildDatosEstudiante(),
                                 
-                                // Botón de guardar
-                                const SizedBox(height: 24),
-                                _buildBotonGuardar(),
+                                // Botón de guardar (solo en modo edición)
+                                if (_modoEdicion) ...[
+                                  const SizedBox(height: 24),
+                                  _buildBotonGuardar(),
+                                ],
                               ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Tarjeta de Configuración de Privacidad
+                  Card(
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Configuración de Privacidad',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF166534),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Controla qué información pueden ver otros usuarios',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          // Nota informativa
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFDEEBFF),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFF1976D2)),
+                            ),
+                            child: const Row(
+                              children: [
+                                Icon(Icons.info_outline, color: Color(0xFF1976D2), size: 20),
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Tu docente podrá ver tu información por motivos académicos.',
+                                    style: TextStyle(fontSize: 12, color: Color(0xFF1565C0)),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          // Perfil Público
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0FDF4),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: CheckboxListTile(
+                              value: _privacidad['perfil_publico'] ?? true,
+                              onChanged: (value) {
+                                setState(() {
+                                  _privacidad['perfil_publico'] = value ?? true;
+                                });
+                              },
+                              title: const Text(
+                                'Perfil Público',
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                              subtitle: const Text(
+                                'Permite que otros usuarios vean tu perfil',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                              activeColor: const Color(0xFF16A34A),
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+                          
+                          // Opciones de privacidad (solo si perfil es público)
+                          if (_privacidad['perfil_publico'] ?? true) ...[
+                            const SizedBox(height: 12),
+                            _buildOpcionPrivacidad('mostrar_email_personal', 'Mostrar email personal'),
+                            _buildOpcionPrivacidad('mostrar_email_academico', 'Mostrar email académico'),
+                            _buildOpcionPrivacidad('mostrar_telefono', 'Mostrar teléfono'),
+                            _buildOpcionPrivacidad('mostrar_fecha_nacimiento', 'Mostrar fecha de nacimiento'),
+                            _buildOpcionPrivacidad('mostrar_centro_educativo', 'Mostrar centro educativo'),
+                            _buildOpcionPrivacidad('mostrar_carrera', 'Mostrar carrera'),
+                            _buildOpcionPrivacidad('mostrar_horas_voluntariado', 'Mostrar horas de voluntariado'),
+                          ],
+                          
+                          const SizedBox(height: 20),
+                          
+                          // Botón guardar privacidad
+                          SizedBox(
+                            width: double.infinity,
+                            height: 48,
+                            child: ElevatedButton(
+                              onPressed: _guardarPrivacidad,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF16A34A),
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text(
+                                'Guardar Configuración de Privacidad',
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
                             ),
                           ),
                         ],
@@ -472,6 +639,20 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 ],
               ),
             ),
+    );
+  }
+  
+  Widget _buildOpcionPrivacidad(String clave, String titulo) {
+    return CheckboxListTile(
+      value: _privacidad[clave] ?? false,
+      onChanged: (value) {
+        setState(() {
+          _privacidad[clave] = value ?? false;
+        });
+      },
+      title: Text(titulo),
+      activeColor: const Color(0xFF16A34A),
+      contentPadding: const EdgeInsets.only(left: 16),
     );
   }
 
@@ -663,6 +844,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
             Expanded(
               child: TextFormField(
                 controller: _nombresController,
+                enabled: _modoEdicion,
                 decoration: const InputDecoration(
                   labelText: 'Nombres',
                   border: OutlineInputBorder(),
@@ -682,6 +864,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
             Expanded(
               child: TextFormField(
                 controller: _apellidosController,
+                enabled: _modoEdicion,
                 decoration: const InputDecoration(
                   labelText: 'Apellidos',
                   border: OutlineInputBorder(),
@@ -704,6 +887,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
         // Emails
         TextFormField(
           controller: _emailPersonalController,
+          enabled: _modoEdicion,
           decoration: const InputDecoration(
             labelText: 'Email Personal',
             border: OutlineInputBorder(),
@@ -725,6 +909,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
         
         TextFormField(
           controller: _emailAcademicoController,
+          enabled: _modoEdicion,
           decoration: const InputDecoration(
             labelText: 'Email Académico',
             border: OutlineInputBorder(),
@@ -750,6 +935,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
             Expanded(
               child: TextFormField(
                 controller: _telefonoController,
+                enabled: _modoEdicion,
                 decoration: const InputDecoration(
                   labelText: 'Teléfono',
                   border: OutlineInputBorder(),
@@ -763,7 +949,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: InkWell(
-                onTap: () async {
+                onTap: _modoEdicion ? () async {
                   final fecha = await showDatePicker(
                     context: context,
                     initialDate: _fechaNacimiento ?? DateTime.now().subtract(const Duration(days: 365 * 20)),
@@ -773,7 +959,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   if (fecha != null) {
                     setState(() => _fechaNacimiento = fecha);
                   }
-                },
+                } : null,
                 child: InputDecorator(
                   decoration: const InputDecoration(
                     labelText: 'Fecha de Nacimiento',
@@ -809,7 +995,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
             ),
           ),
           value: _esEstudiante,
-          onChanged: (value) {
+          onChanged: _modoEdicion ? (value) {
             setState(() {
               _esEstudiante = value ?? false;
               if (!_esEstudiante) {
@@ -818,7 +1004,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 _numCuentaController.clear();
               }
             });
-          },
+          } : null,
           activeColor: const Color(0xFF16A34A), // Verde medio
           controlAffinity: ListTileControlAffinity.leading,
         ),
@@ -870,18 +1056,14 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 child: Text(centro.nombre),
               )),
             ],
-            onChanged: (value) {
-              setState(() {
-                _centroEducativoSeleccionado = value;
-                _filtrarCarreras();
-              });
-            },
+            onChanged: _modoEdicion ? _onCentroEducativoChanged : null,
           ),
           const SizedBox(height: 16),
           
           // Número de Cuenta
           TextFormField(
             controller: _numCuentaController,
+            enabled: _modoEdicion,
             decoration: const InputDecoration(
               labelText: 'Número de Cuenta / Identidad',
               hintText: 'Ej: 0000-00000-0000',
@@ -913,7 +1095,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 child: Text(carrera.nombre),
               )),
             ],
-            onChanged: _centroEducativoSeleccionado != null
+            onChanged: (_modoEdicion && _centroEducativoSeleccionado != null)
                 ? (value) {
                     setState(() {
                       _carreraSeleccionada = value;
@@ -1000,3 +1182,4 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
 }
+

@@ -260,6 +260,7 @@ exports.obtenerEstudiantes = async (req, res) => {
         u.Num_cuenta,
         u.Esta_verificado,
         u.Es_estudiante,
+        u.ID_rol,
         c.Nombre as Carrera,
         u.created_at as Fecha_registro
       FROM Usuarios u

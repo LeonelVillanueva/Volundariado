@@ -63,6 +63,40 @@
           </button>
         </form>
 
+        <!-- Separador -->
+        <div class="my-6 flex items-center">
+          <div class="flex-1 border-t border-gray-300"></div>
+          <span class="px-4 text-gray-500 text-sm font-medium">o</span>
+          <div class="flex-1 border-t border-gray-300"></div>
+        </div>
+
+        <!-- Botones de Registro -->
+        <div class="space-y-4">
+          <p class="text-center text-gray-700 font-medium mb-4">¿No tienes cuenta? Regístrate como:</p>
+          
+          <div class="grid grid-cols-2 gap-3">
+            <!-- Botón Estudiante/Voluntario -->
+            <button
+              @click="irARegistroVoluntario"
+              type="button"
+              class="flex flex-col items-center justify-center p-4 bg-gradient-to-br from-primary-50 to-primary-100 hover:from-primary-100 hover:to-primary-200 border-2 border-primary-300 hover:border-primary-500 rounded-lg transition-all duration-200 group"
+            >
+              <img src="/images/Vl_img.png" alt="Voluntario" class="w-12 h-12 mb-2 group-hover:scale-110 transition-transform" />
+              <span class="text-xs font-semibold text-primary-700 text-center">Estudiante/<br/>Voluntario</span>
+            </button>
+
+            <!-- Botón Docente -->
+            <button
+              @click="irARegistroDocente"
+              type="button"
+              class="flex flex-col items-center justify-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 border-2 border-blue-300 hover:border-blue-500 rounded-lg transition-all duration-200 group"
+            >
+              <img src="/images/Dc_img.png" alt="Docente" class="w-12 h-12 mb-2 group-hover:scale-110 transition-transform" />
+              <span class="text-xs font-semibold text-blue-700 text-center">Docente</span>
+            </button>
+          </div>
+        </div>
+
         <!-- Credenciales de prueba -->
         <div class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
           <p class="text-sm text-gray-600 font-medium mb-2">Credenciales de prueba:</p>
@@ -87,6 +121,15 @@ const form = ref({
 const loading = ref(false);
 const error = ref('');
 const api = useApi();
+
+// Navegación a páginas de registro
+const irARegistroVoluntario = () => {
+  navigateTo('/registro-voluntario');
+};
+
+const irARegistroDocente = () => {
+  navigateTo('/registro-docente');
+};
 
 const handleLogin = async () => {
   loading.value = true;
@@ -113,8 +156,8 @@ const handleLogin = async () => {
       error.value = data.mensaje || 'Error al iniciar sesión';
     }
   } catch (err) {
-    console.error('Error en login:', err);
-    error.value = 'No se pudo conectar con el servidor. Verifica que el backend esté corriendo en http://localhost:3000';
+    // El mensaje ya viene amigable desde useApi
+    error.value = err.message || 'Ocurrió un error. Por favor intenta de nuevo.';
   } finally {
     loading.value = false;
   }

@@ -5,6 +5,7 @@ import '../models/usuario.dart';
 import '../services/api_service.dart';
 import 'login_screen.dart';
 import 'perfil_screen.dart';
+import 'gestion_centro_screen.dart';
 
 class PanelScreen extends StatefulWidget {
   const PanelScreen({super.key});
@@ -82,6 +83,19 @@ class _PanelScreenState extends State<PanelScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          // Botón "Mi Centro" solo para Docentes (ID_rol = 4)
+          if (usuario?.idRol == 4)
+            IconButton(
+              icon: const Icon(Icons.school),
+              onPressed: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const GestionCentroScreen()),
+                );
+                // Cuando vuelve, refrescar datos
+                _cargarDatosUsuario();
+              },
+              tooltip: 'Mi Centro',
+            ),
           IconButton(
             icon: const Icon(Icons.person),
             onPressed: () async {
@@ -152,6 +166,32 @@ class _PanelScreenState extends State<PanelScreen> {
                               backgroundColor: Colors.black26,
                               child: const CircularProgressIndicator(
                                 valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            ),
+                          ),
+                        // Badge de verificado (estilo Instagram/Twitter)
+                        if (usuario?.estaVerificado == 1)
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: BoxDecoration(
+                                color: Colors.green,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.2),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 16,
                               ),
                             ),
                           ),

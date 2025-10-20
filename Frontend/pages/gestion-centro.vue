@@ -302,11 +302,45 @@
               Solicitudes Pendientes ({{ estudiantesPendientes.length }})
             </h2>
             <div class="space-y-4">
-              <div v-for="estudiante in estudiantesPendientes" :key="estudiante.ID" class="border border-gray-200 rounded-lg p-4">
-                <div class="flex justify-between items-start">
+              <div v-for="estudiante in estudiantesPendientes" :key="estudiante.ID" class="border border-gray-200 rounded-lg p-4 hover:border-primary-300 transition">
+                <div class="flex items-start space-x-4">
+                  <!-- Foto de perfil -->
+                  <div 
+                    @click="verPerfilEstudiante(estudiante.ID)"
+                    class="cursor-pointer flex-shrink-0"
+                  >
+                    <div v-if="estudiante.foto_perfil" class="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-300 hover:border-primary-500 transition">
+                      <img :src="estudiante.foto_perfil" :alt="estudiante.Nombres" class="w-full h-full object-cover" />
+                    </div>
+                    <div v-else class="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-bold text-xl border-2 border-gray-300 hover:border-primary-500 transition">
+                      {{ getIniciales(estudiante.Nombres, estudiante.Apellidos) }}
+                    </div>
+                  </div>
+                  
+                  <!-- Información -->
                   <div class="flex-1">
-                    <h3 class="font-semibold text-lg text-gray-800">{{ estudiante.Nombres }} {{ estudiante.Apellidos }}</h3>
-                    <div class="mt-2 grid grid-cols-2 gap-2 text-sm">
+                    <div class="flex items-center space-x-2 mb-2">
+                      <h3 
+                        @click="verPerfilEstudiante(estudiante.ID)"
+                        class="font-semibold text-lg text-gray-800 hover:text-primary-600 cursor-pointer"
+                      >
+                        {{ estudiante.Nombres }} {{ estudiante.Apellidos }}
+                      </h3>
+                      <!-- Badge de Rol -->
+                      <span 
+                        v-if="estudiante.ID_rol === 4"
+                        class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full border border-blue-300"
+                      >
+                        🎓 Docente
+                      </span>
+                      <span 
+                        v-else
+                        class="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full border border-green-300"
+                      >
+                        📚 Estudiante
+                      </span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-sm">
                       <div><span class="text-gray-500">Email Personal:</span> {{ estudiante.Email_personal }}</div>
                       <div><span class="text-gray-500">Email Académico:</span> {{ estudiante.Email_academico || 'N/A' }}</div>
                       <div><span class="text-gray-500">Teléfono:</span> {{ estudiante.Telefono || 'N/A' }}</div>
@@ -314,7 +348,9 @@
                       <div class="col-span-2"><span class="text-gray-500">Carrera:</span> {{ estudiante.Carrera || 'No especificada' }}</div>
                     </div>
                   </div>
-                  <div class="flex space-x-2 ml-4">
+                  
+                  <!-- Botones de acción -->
+                  <div class="flex flex-col space-y-2 flex-shrink-0">
                     <button
                       @click="verificarEstudiante(estudiante.ID)"
                       class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition"
@@ -346,34 +382,67 @@
               No hay estudiantes verificados aún
             </div>
             
-            <div v-else class="overflow-x-auto">
-              <table class="w-full">
-                <thead class="bg-gray-50">
-                  <tr>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">N° Cuenta</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Carrera</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                  <tr v-for="estudiante in estudiantesVerificados" :key="estudiante.ID" class="hover:bg-gray-50">
-                    <td class="px-4 py-3">{{ estudiante.Nombres }} {{ estudiante.Apellidos }}</td>
-                    <td class="px-4 py-3 text-sm">{{ estudiante.Email_personal }}</td>
-                    <td class="px-4 py-3 text-sm">{{ estudiante.Num_cuenta || 'N/A' }}</td>
-                    <td class="px-4 py-3 text-sm">{{ estudiante.Carrera || 'No especificada' }}</td>
-                    <td class="px-4 py-3">
-                      <button
-                        @click="removerEstudiante(estudiante.ID)"
-                        class="text-red-600 hover:text-red-800 font-medium"
+            <div v-else class="space-y-3">
+              <div v-for="estudiante in estudiantesVerificados" :key="estudiante.ID" class="border border-gray-200 rounded-lg p-4 hover:border-primary-300 transition">
+                <div class="flex items-center space-x-4">
+                  <!-- Foto de perfil -->
+                  <div 
+                    @click="verPerfilEstudiante(estudiante.ID)"
+                    class="cursor-pointer flex-shrink-0"
+                  >
+                    <div v-if="estudiante.foto_perfil" class="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-300 hover:border-primary-500 transition">
+                      <img :src="estudiante.foto_perfil" :alt="estudiante.Nombres" class="w-full h-full object-cover" />
+                    </div>
+                    <div v-else class="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-bold border-2 border-gray-300 hover:border-primary-500 transition">
+                      {{ getIniciales(estudiante.Nombres, estudiante.Apellidos) }}
+                    </div>
+                  </div>
+                  
+                  <!-- Nombre (clickable) -->
+                  <div class="flex-1">
+                    <div class="flex items-center space-x-2 mb-1">
+                      <h3 
+                        @click="verPerfilEstudiante(estudiante.ID)"
+                        class="font-semibold text-gray-800 hover:text-primary-600 cursor-pointer"
                       >
-                        Remover
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                        {{ estudiante.Nombres }} {{ estudiante.Apellidos }}
+                      </h3>
+                      <!-- Badge de Rol -->
+                      <span 
+                        v-if="estudiante.ID_rol === 4"
+                        class="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full border border-blue-300"
+                      >
+                        🎓 Docente
+                      </span>
+                      <span 
+                        v-else
+                        class="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-semibold rounded-full border border-green-300"
+                      >
+                        📚 Estudiante
+                      </span>
+                    </div>
+                    <p class="text-sm text-gray-500">{{ estudiante.Carrera || 'No especificada' }}</p>
+                  </div>
+                  
+                  <!-- Email -->
+                  <div class="hidden md:block flex-1">
+                    <p class="text-sm text-gray-600">{{ estudiante.Email_personal }}</p>
+                  </div>
+                  
+                  <!-- N° Cuenta -->
+                  <div class="hidden lg:block">
+                    <p class="text-sm text-gray-600">{{ estudiante.Num_cuenta || 'N/A' }}</p>
+                  </div>
+                  
+                  <!-- Botón remover -->
+                  <button
+                    @click="removerEstudiante(estudiante.ID)"
+                    class="text-red-600 hover:text-red-800 font-medium px-3 py-1 rounded hover:bg-red-50 transition"
+                  >
+                    Remover
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -448,6 +517,53 @@
       ]">
         {{ mensaje }}
       </div>
+
+      <!-- Modal de Confirmación -->
+      <div v-if="modalConfirmacion" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="modalConfirmacion = false">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 overflow-hidden">
+          <!-- Header -->
+          <div :class="[
+            'px-6 py-4',
+            modalTipo === 'advertencia' ? 'bg-yellow-500' : 'bg-primary-600'
+          ]">
+            <h3 class="text-xl font-bold text-white flex items-center">
+              <svg v-if="modalTipo === 'advertencia'" class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+              <svg v-else class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"/>
+              </svg>
+              {{ modalTitulo }}
+            </h3>
+          </div>
+          
+          <!-- Body -->
+          <div class="px-6 py-4">
+            <p class="text-gray-700 whitespace-pre-line">{{ modalMensaje }}</p>
+          </div>
+          
+          <!-- Footer -->
+          <div class="px-6 py-4 bg-gray-50 flex justify-end space-x-3">
+            <button
+              @click="modalConfirmacion = false"
+              class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition"
+            >
+              Cancelar
+            </button>
+            <button
+              @click="confirmarAccion"
+              :class="[
+                'px-4 py-2 rounded-lg font-medium transition',
+                modalTipo === 'advertencia' 
+                  ? 'bg-yellow-500 hover:bg-yellow-600 text-white'
+                  : 'bg-primary-600 hover:bg-primary-700 text-white'
+              ]"
+            >
+              {{ modalTipo === 'advertencia' ? 'Continuar de Todas Formas' : 'Confirmar' }}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -471,6 +587,13 @@ const creando = ref(false);
 const guardando = ref(false);
 const mensaje = ref('');
 const mensajeTipo = ref('success');
+
+// Modal de confirmación
+const modalConfirmacion = ref(false);
+const modalTitulo = ref('');
+const modalMensaje = ref('');
+const modalAccion = ref(null);
+const modalTipo = ref('normal'); // 'normal' o 'advertencia'
 
 const formCentro = ref({
   nombre: '',
@@ -673,6 +796,8 @@ const cargarEstudiantes = async () => {
     const dataPendientes = await responsePendientes.json();
     if (dataPendientes.success) {
       estudiantesPendientes.value = dataPendientes.data;
+      // Cargar fotos de perfil para cada estudiante pendiente
+      await cargarFotosEstudiantes(estudiantesPendientes.value);
     }
 
     // Cargar todos los estudiantes
@@ -686,11 +811,36 @@ const cargarEstudiantes = async () => {
     const dataEstudiantes = await responseEstudiantes.json();
     if (dataEstudiantes.success) {
       estudiantesVerificados.value = dataEstudiantes.data.filter(e => e.Esta_verificado === 1);
+      // Cargar fotos de perfil para cada estudiante verificado
+      await cargarFotosEstudiantes(estudiantesVerificados.value);
     }
   } catch (error) {
     console.error('Error al cargar estudiantes:', error);
     estudiantesPendientes.value = [];
     estudiantesVerificados.value = [];
+  }
+};
+
+const cargarFotosEstudiantes = async (estudiantes) => {
+  const token = localStorage.getItem('token');
+  
+  for (const estudiante of estudiantes) {
+    try {
+      const response = await fetch(`http://localhost:3000/api/fotos-perfil/usuario/${estudiante.ID}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const data = await response.json();
+      if (data.success && data.data) {
+        estudiante.foto_perfil = data.data.imagen_url;
+      }
+    } catch (error) {
+      // No tiene foto, usar iniciales
+      estudiante.foto_perfil = null;
+    }
   }
 };
 
@@ -720,87 +870,108 @@ const cargarCarreras = async () => {
 };
 
 const verificarEstudiante = async (idEstudiante) => {
-  if (!confirm('¿Estás seguro de verificar a este estudiante?')) return;
+  await mostrarModal(
+    'Verificar Estudiante',
+    '¿Estás seguro de verificar a este estudiante?',
+    async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://localhost:3000/api/verificacion/verificar/${idEstudiante}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
 
-  try {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`http://localhost:3000/api/verificacion/verificar/${idEstudiante}`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
+        const data = await response.json();
+
+        if (data.success) {
+          mostrarMensaje('Estudiante verificado exitosamente', 'success');
+          await cargarEstudiantes();
+          await cargarEstadisticas();
+        } else {
+          mostrarMensaje(data.mensaje || 'Error al verificar estudiante', 'error');
+        }
+      } catch (error) {
+        console.error('Error al verificar estudiante:', error);
+        mostrarMensaje('Error al verificar estudiante', 'error');
       }
-    });
-
-    const data = await response.json();
-
-    if (data.success) {
-      mostrarMensaje('Estudiante verificado exitosamente', 'success');
-      await cargarEstudiantes();
-      await cargarEstadisticas();
-    } else {
-      mostrarMensaje(data.mensaje || 'Error al verificar estudiante', 'error');
     }
-  } catch (error) {
-    console.error('Error al verificar estudiante:', error);
-    mostrarMensaje('Error al verificar estudiante', 'error');
-  }
+  );
 };
 
 const rechazarEstudiante = async (idEstudiante) => {
-  if (!confirm('¿Estás seguro de rechazar esta solicitud?')) return;
+  await mostrarModal(
+    'Rechazar Solicitud',
+    '¿Estás seguro de rechazar esta solicitud?\n\nEl estudiante permanecerá como pendiente.',
+    async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://localhost:3000/api/verificacion/rechazar/${idEstudiante}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
 
-  try {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`http://localhost:3000/api/verificacion/rechazar/${idEstudiante}`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
+        const data = await response.json();
+
+        if (data.success) {
+          mostrarMensaje('Solicitud rechazada', 'success');
+          await cargarEstudiantes();
+          await cargarEstadisticas();
+        } else {
+          mostrarMensaje(data.mensaje || 'Error al rechazar', 'error');
+        }
+      } catch (error) {
+        console.error('Error al rechazar:', error);
+        mostrarMensaje('Error al rechazar solicitud', 'error');
       }
-    });
-
-    const data = await response.json();
-
-    if (data.success) {
-      mostrarMensaje('Solicitud rechazada', 'success');
-      await cargarEstudiantes();
-      await cargarEstadisticas();
-    } else {
-      mostrarMensaje(data.mensaje || 'Error al rechazar', 'error');
     }
-  } catch (error) {
-    console.error('Error al rechazar:', error);
-    mostrarMensaje('Error al rechazar solicitud', 'error');
-  }
+  );
 };
 
 const removerEstudiante = async (idEstudiante) => {
-  if (!confirm('¿Estás seguro de remover este estudiante del centro? Esto eliminará su verificación y asociación al centro.')) return;
+  // Verificar si se está removiendo a sí mismo
+  const esAutoRemocion = idEstudiante === usuario.value.ID;
+  
+  await mostrarModal(
+    esAutoRemocion ? 'ADVERTENCIA' : 'Remover Estudiante',
+    esAutoRemocion 
+      ? 'Estás a punto de removerte a TI MISMO del centro.\n\n' +
+        'Si eres el único docente, NO podrás volver a acceder sin ayuda de un administrador.\n\n' +
+        '¿Estás seguro de continuar?'
+      : '¿Estás seguro de remover este estudiante del centro?\n\n' +
+        'Esto eliminará su verificación y asociación al centro.',
+    async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://localhost:3000/api/verificacion/remover/${idEstudiante}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
 
-  try {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`http://localhost:3000/api/verificacion/remover/${idEstudiante}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
+        const data = await response.json();
+
+        if (data.success) {
+          mostrarMensaje('Estudiante removido del centro', 'success');
+          await cargarEstudiantes();
+          await cargarEstadisticas();
+        } else {
+          mostrarMensaje(data.mensaje || 'Error al remover estudiante', 'error');
+        }
+      } catch (error) {
+        console.error('Error al remover estudiante:', error);
+        mostrarMensaje('Error al remover estudiante', 'error');
       }
-    });
-
-    const data = await response.json();
-
-    if (data.success) {
-      mostrarMensaje('Estudiante removido del centro', 'success');
-      await cargarEstudiantes();
-      await cargarEstadisticas();
-    } else {
-      mostrarMensaje(data.mensaje || 'Error al remover estudiante', 'error');
-    }
-  } catch (error) {
-    console.error('Error al remover estudiante:', error);
-    mostrarMensaje('Error al remover estudiante', 'error');
-  }
+    },
+    esAutoRemocion ? 'advertencia' : 'normal'
+  );
 };
 
 const crearCarrera = async () => {
@@ -861,34 +1032,38 @@ const crearCarrera = async () => {
 };
 
 const desasociarCarrera = async (idCarrera) => {
-  if (!confirm('¿Estás seguro de desasociar esta carrera del centro?')) return;
+  await mostrarModal(
+    'Desasociar Carrera',
+    '¿Estás seguro de desasociar esta carrera del centro?\n\nLos estudiantes ya inscritos la mantendrán.',
+    async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:3000/api/carreras/desasociar', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            id_carrera: idCarrera,
+            id_centro: usuario.value.ID_centro_educativo
+          })
+        });
 
-  try {
-    const token = localStorage.getItem('token');
-    const response = await fetch('http://localhost:3000/api/carreras/desasociar', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        id_carrera: idCarrera,
-        id_centro: usuario.value.ID_centro_educativo
-      })
-    });
+        const data = await response.json();
 
-    const data = await response.json();
-
-    if (data.success) {
-      mostrarMensaje('Carrera desasociada exitosamente', 'success');
-      await cargarCarreras();
-    } else {
-      mostrarMensaje(data.mensaje || 'Error al desasociar carrera', 'error');
+        if (data.success) {
+          mostrarMensaje('Carrera desasociada exitosamente', 'success');
+          await cargarCarreras();
+        } else {
+          mostrarMensaje(data.mensaje || 'Error al desasociar carrera', 'error');
+        }
+      } catch (error) {
+        console.error('Error al desasociar carrera:', error);
+        mostrarMensaje('Error al desasociar carrera', 'error');
+      }
     }
-  } catch (error) {
-    console.error('Error al desasociar carrera:', error);
-    mostrarMensaje('Error al desasociar carrera', 'error');
-  }
+  );
 };
 
 const mostrarMensaje = (texto, tipo = 'success') => {
@@ -897,6 +1072,37 @@ const mostrarMensaje = (texto, tipo = 'success') => {
   setTimeout(() => {
     mensaje.value = '';
   }, 3000);
+};
+
+const mostrarModal = (titulo, mensajeTexto, accion, tipo = 'normal') => {
+  return new Promise((resolve) => {
+    modalTitulo.value = titulo;
+    modalMensaje.value = mensajeTexto;
+    modalTipo.value = tipo;
+    modalAccion.value = () => {
+      modalConfirmacion.value = false;
+      resolve(true);
+      if (accion) accion();
+    };
+    modalConfirmacion.value = true;
+  });
+};
+
+const confirmarAccion = () => {
+  if (modalAccion.value) {
+    modalAccion.value();
+  }
+};
+
+const getIniciales = (nombres, apellidos) => {
+  const inicial1 = nombres?.charAt(0)?.toUpperCase() || '';
+  const inicial2 = apellidos?.charAt(0)?.toUpperCase() || '';
+  return inicial1 + inicial2;
+};
+
+const verPerfilEstudiante = (idEstudiante) => {
+  // Abrir en nueva pestaña para no perder el contexto
+  window.open(`/ver-perfil/${idEstudiante}`, '_blank');
 };
 
 const volverAlPanel = () => {

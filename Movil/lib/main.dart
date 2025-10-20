@@ -4,6 +4,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'providers/auth_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/panel_screen.dart';
+import 'screens/registro_voluntario_screen.dart';
+import 'screens/registro_docente_screen.dart';
 
 void main() async {
   // Cargar variables de entorno
@@ -29,6 +31,10 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
         ),
         home: const SplashScreen(),
+        routes: {
+          '/registro-voluntario': (context) => const RegistroVoluntarioScreen(),
+          '/registro-docente': (context) => const RegistroDocenteScreen(),
+        },
       ),
     );
   }

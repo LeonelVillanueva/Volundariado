@@ -1,50 +1,93 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100">
-    <!-- Navbar -->
-    <nav class="bg-primary-700 shadow-lg">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
-          <div class="flex items-center">
-            <h1 class="text-2xl font-bold text-white">Panel de Control</h1>
-          </div>
-          <div class="flex items-center space-x-4">
-            <div v-if="usuario" class="text-right">
-              <p class="text-sm font-medium text-white">{{ usuario.Nombres }} {{ usuario.Apellidos }}</p>
-              <p class="text-xs text-primary-100">{{ getRolNombre(usuario.ID_rol) }}</p>
+  <div class="flex h-screen bg-gradient-to-br from-primary-50 to-primary-100">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white shadow-xl flex flex-col">
+      <!-- Perfil del Usuario -->
+      <div class="p-6 bg-primary-700 text-white">
+        <div class="flex flex-col items-center">
+          <!-- Foto de Perfil (clickable) -->
+          <div 
+            @click="irAPerfil"
+            class="cursor-pointer mb-4 relative group"
+          >
+            <div v-if="fotoPerfil" class="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-lg group-hover:border-primary-300 transition">
+              <img :src="fotoPerfil" :alt="usuario?.Nombres" class="w-full h-full object-cover" />
             </div>
-            <!-- Botón para Docentes -->
-            <button
-              v-if="usuario?.ID_rol === 4"
-              @click="irAGestionCentro"
-              class="bg-primary-600 hover:bg-primary-500 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center space-x-2"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+            <div v-else class="w-24 h-24 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-bold text-3xl border-4 border-white shadow-lg group-hover:border-primary-300 transition">
+              {{ getIniciales(usuario?.Nombres, usuario?.Apellidos) }}
+            </div>
+            <!-- Icono de editar al hover -->
+            <div class="absolute inset-0 bg-black bg-opacity-40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
               </svg>
-              <span>Mi Centro</span>
-            </button>
-            <button
-              @click="irAPerfil"
-              class="bg-primary-600 hover:bg-primary-500 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center space-x-2"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-              </svg>
-              <span>Mi Perfil</span>
-            </button>
-            <button
-              @click="logout"
-              class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition duration-200"
-            >
-              Cerrar Sesión
-            </button>
+            </div>
           </div>
+          
+          <!-- Nombre y Rol -->
+          <h2 class="text-xl font-bold text-center">{{ usuario?.Nombres }} {{ usuario?.Apellidos }}</h2>
+          <p class="text-sm text-primary-100 mt-1">{{ getRolNombre(usuario?.ID_rol) }}</p>
         </div>
       </div>
-    </nav>
+
+      <!-- Menú de Navegación -->
+      <nav class="flex-1 p-4 overflow-y-auto">
+        <ul class="space-y-2">
+          <!-- Mi Centro (solo Docentes) -->
+          <li v-if="usuario?.ID_rol === 4">
+            <button
+              @click="irAGestionCentro"
+              class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-primary-50 transition group"
+            >
+              <svg class="w-5 h-5 text-primary-600 group-hover:text-primary-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+              </svg>
+              <span class="font-medium text-gray-700 group-hover:text-primary-700">Mi Centro</span>
+            </button>
+          </li>
+
+          <!-- Aprobar Docentes (solo Admins) -->
+          <li v-if="usuario?.ID_rol === 6">
+            <button
+              @click="irAAprobaciones"
+              class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-primary-50 transition group"
+            >
+              <svg class="w-5 h-5 text-primary-600 group-hover:text-primary-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <span class="font-medium text-gray-700 group-hover:text-primary-700">Aprobar Docentes</span>
+            </button>
+          </li>
+
+          <!-- Divider -->
+          <li class="py-2">
+            <div class="border-t border-gray-200"></div>
+          </li>
+
+          <!-- Cerrar Sesión -->
+          <li>
+            <button
+              @click="logout"
+              class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-red-50 transition group"
+            >
+              <svg class="w-5 h-5 text-red-600 group-hover:text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+              </svg>
+              <span class="font-medium text-red-600 group-hover:text-red-700">Cerrar Sesión</span>
+            </button>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Footer del Sidebar -->
+      <div class="p-4 border-t border-gray-200">
+        <p class="text-xs text-gray-500 text-center">Sistema de Voluntariado v1.0</p>
+      </div>
+    </aside>
 
     <!-- Contenido Principal -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="flex-1 overflow-y-auto">
+      <div class="max-w-7xl mx-auto px-8 py-8">
       <!-- Mensaje de Bienvenida -->
       <div class="bg-white rounded-lg shadow-md p-6 mb-8">
         <h2 class="text-3xl font-bold text-gray-800 mb-2">
@@ -137,7 +180,8 @@
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </main>
   </div>
 </template>
 
@@ -148,6 +192,31 @@ definePageMeta({
 
 const usuario = ref(null);
 const cargando = ref(true);
+const fotoPerfil = ref(null);
+
+// Cargar foto de perfil
+const cargarFotoPerfil = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const response = await fetch('http://localhost:3000/api/fotos-perfil/mi-foto', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success && data.data) {
+        fotoPerfil.value = data.data.imagen_url;
+      }
+    }
+  } catch (error) {
+    // Silenciar error si no hay foto
+  }
+};
 
 // Cargar datos actualizados del usuario desde el backend
 const cargarDatosUsuario = async () => {
@@ -175,11 +244,9 @@ const cargarDatosUsuario = async () => {
         usuario.value = data.data;
         // Actualizar localStorage con datos más recientes
         localStorage.setItem('usuario', JSON.stringify(data.data));
-        console.log('✅ Datos de usuario actualizados desde el backend');
       }
     } else if (response.status === 401) {
       // Token inválido, cerrar sesión
-      console.log('❌ Token inválido, cerrando sesión');
       localStorage.removeItem('token');
       localStorage.removeItem('usuario');
       window.location.href = '/';
@@ -210,6 +277,7 @@ onMounted(() => {
       usuario.value = JSON.parse(usuarioGuardado);
       // Luego actualizar con datos del backend
       cargarDatosUsuario();
+      cargarFotoPerfil();
     }
 
     // Escuchar cuando la ventana recupera el foco (cuando vuelves de otra pestaña/página)
@@ -239,6 +307,17 @@ const irAPerfil = () => {
 // Ir a gestión de centro (solo docentes)
 const irAGestionCentro = () => {
   window.location.href = '/gestion-centro';
+};
+
+const irAAprobaciones = () => {
+  window.location.href = '/aprobar-docentes';
+};
+
+// Obtener iniciales para avatar
+const getIniciales = (nombres, apellidos) => {
+  const inicial1 = nombres?.charAt(0) || '';
+  const inicial2 = apellidos?.charAt(0) || '';
+  return (inicial1 + inicial2).toUpperCase();
 };
 
 // Cerrar sesión

@@ -150,6 +150,38 @@ exports.removerEstudiante = async (req, res) => {
       });
     }
 
+    // IMPORTANTE: Verificar si el docente se está removiendo a sí mismo
+    if (parseInt(id_estudiante) === req.usuario.id) {
+      // Verificar si hay otros docentes en el mismo centro
+      const { pool } = require('../config/database');
+      const queryDocentes = `
+        SELECT COUNT(*) as total_docentes
+        FROM Usuarios
+        WHERE ID_centro_educativo = ?
+          AND ID_rol = 4
+          AND ID != ?
+          AND Estado = 'Activo'
+      `;
+      
+      const [resultado] = await pool.execute(queryDocentes, [
+        req.usuario.id_centro_educativo,
+        req.usuario.id
+      ]);
+      
+      const totalOtrosDocentes = resultado[0].total_docentes;
+      
+      // Si no hay otros docentes, no puede removerse
+      if (totalOtrosDocentes === 0) {
+        return res.status(403).json({
+          success: false,
+          mensaje: 'No puedes removerte del centro porque eres el único docente. Primero debe haber otro docente activo en el centro.'
+        });
+      }
+      
+      // Si hay otros docentes, permitir pero con advertencia en el mensaje
+      console.log(`⚠️ Docente ${req.usuario.id} se está removiendo del centro. Hay ${totalOtrosDocentes} docente(s) más en el centro.`);
+    }
+
     // Remover del centro (limpiar datos de centro y carrera)
     await Usuario.actualizar(parseInt(id_estudiante), {
       ID_centro_educativo: null,
@@ -250,6 +282,7 @@ exports.obtenerPendientes = async (req, res) => {
         u.Email_academico,
         u.Telefono,
         u.Num_cuenta,
+        u.ID_rol,
         c.Nombre as Carrera,
         u.created_at as Fecha_solicitud
       FROM Usuarios u

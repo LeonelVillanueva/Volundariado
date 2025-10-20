@@ -15,15 +15,35 @@
             </button>
             <h1 class="text-3xl font-bold">Mi Perfil</h1>
           </div>
-          <button 
-            @click="logout"
-            class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors flex items-center space-x-2"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-            </svg>
-            <span>Cerrar Sesión</span>
-          </button>
+          <div class="flex items-center space-x-3">
+            <!-- Botón de Editar/Cancelar -->
+            <button 
+              @click="modoEdicion = !modoEdicion"
+              :class="[
+                'px-4 py-2 rounded-lg transition-colors flex items-center space-x-2',
+                modoEdicion 
+                  ? 'bg-gray-600 hover:bg-gray-700 text-white'
+                  : 'bg-primary-600 hover:bg-primary-500 text-white'
+              ]"
+            >
+              <svg v-if="!modoEdicion" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+              </svg>
+              <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+              <span>{{ modoEdicion ? 'Cancelar' : 'Editar Perfil' }}</span>
+            </button>
+            <button 
+              @click="logout"
+              class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors flex items-center space-x-2"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+              </svg>
+              <span>Cerrar Sesión</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -140,7 +160,132 @@
             <div class="p-6">
               <h3 class="text-xl font-bold text-gray-900 mb-6">Información Personal</h3>
               
-              <form @submit.prevent="actualizarPerfil" class="space-y-6">
+              <!-- Vista de Solo Lectura -->
+              <div v-if="!modoEdicion" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0 w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                      <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                      </svg>
+                    </div>
+                    <div class="flex-1">
+                      <p class="text-sm text-gray-500">Nombre Completo</p>
+                      <p class="font-medium text-gray-900">{{ form.Nombres }} {{ form.Apellidos }}</p>
+                    </div>
+                  </div>
+                  
+                  <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0 w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                      <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                      </svg>
+                    </div>
+                    <div class="flex-1">
+                      <p class="text-sm text-gray-500">Email Personal</p>
+                      <p class="font-medium text-gray-900">{{ form.Email_personal || 'No proporcionado' }}</p>
+                    </div>
+                  </div>
+
+                  <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0 w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                      <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                      </svg>
+                    </div>
+                    <div class="flex-1">
+                      <p class="text-sm text-gray-500">Email Académico</p>
+                      <p class="font-medium text-gray-900">{{ form.Email_academico || 'No proporcionado' }}</p>
+                    </div>
+                  </div>
+
+                  <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0 w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                      <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                      </svg>
+                    </div>
+                    <div class="flex-1">
+                      <p class="text-sm text-gray-500">Teléfono</p>
+                      <p class="font-medium text-gray-900">{{ form.Telefono || 'No proporcionado' }}</p>
+                    </div>
+                  </div>
+
+                  <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0 w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                      <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                      </svg>
+                    </div>
+                    <div class="flex-1">
+                      <p class="text-sm text-gray-500">Fecha de Nacimiento</p>
+                      <p class="font-medium text-gray-900">{{ form.Fecha_nacimiento || 'No proporcionada' }}</p>
+                    </div>
+                  </div>
+
+                  <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0 w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                      <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                      </svg>
+                    </div>
+                    <div class="flex-1">
+                      <p class="text-sm text-gray-500">Es Estudiante</p>
+                      <p class="font-medium text-gray-900">{{ form.Es_estudiante ? 'Sí' : 'No' }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Información académica (solo si es estudiante) -->
+                <div v-if="form.Es_estudiante" class="mt-6 p-4 bg-primary-50 rounded-lg border border-primary-200">
+                  <h4 class="font-semibold text-primary-800 mb-3">Información Académica</h4>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p class="text-sm text-gray-600">Centro Educativo</p>
+                      <p class="font-medium text-gray-900">{{ getCentroNombre(form.ID_centro_educativo) }}</p>
+                    </div>
+                    <div>
+                      <p class="text-sm text-gray-600">Carrera</p>
+                      <p class="font-medium text-gray-900">{{ getCarreraNombre(form.ID_carrera) }}</p>
+                    </div>
+                    <div>
+                      <p class="text-sm text-gray-600">Número de Cuenta</p>
+                      <p class="font-medium text-gray-900">{{ form.Num_cuenta || 'No proporcionado' }}</p>
+                    </div>
+                    <div>
+                      <p class="text-sm text-gray-600">Estado de Verificación</p>
+                      <span v-if="usuario?.Esta_verificado === 1" class="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        Verificado
+                      </span>
+                      <span v-else class="inline-flex items-center px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
+                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                        </svg>
+                        Pendiente
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Horas de voluntariado -->
+                <div class="flex items-center space-x-4 p-4 bg-primary-50 rounded-lg">
+                  <div class="flex-shrink-0 w-12 h-12 bg-primary-600 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-600">Horas de Voluntariado Acumuladas</p>
+                    <p class="text-2xl font-bold text-primary-600">{{ usuario?.Horas_voluntariado_acumuladas || 0 }} horas</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Formulario de Edición -->
+              <form v-else @submit.prevent="actualizarPerfil" class="space-y-6">
                 <!-- Nombres y Apellidos -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -149,7 +294,7 @@
                       v-model="form.Nombres"
                       type="text"
                       required
-                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:bg-gray-50 disabled:cursor-not-allowed"
                     >
                   </div>
                   <div>
@@ -224,7 +369,7 @@
                   <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Centro Educativo</label>
                     <select
-                      v-model="form.ID_centro_educativo"
+                      v-model.number="form.ID_centro_educativo"
                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     >
                       <option :value="null">Seleccione un centro educativo</option>
@@ -252,7 +397,7 @@
                   <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Carrera</label>
                     <select
-                      v-model="form.ID_carrera"
+                      v-model.number="form.ID_carrera"
                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       :disabled="!form.ID_centro_educativo"
                     >
@@ -266,12 +411,12 @@
                     </p>
                   </div>
                 </div>
-
+                
                 <!-- Botones -->
                 <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
                   <button
                     type="button"
-                    @click="cancelar"
+                    @click="cancelarEdicion"
                     class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                   >
                     Cancelar
@@ -291,6 +436,116 @@
               </form>
             </div>
           </div>
+
+          <!-- Configuración de Privacidad -->
+          <div class="bg-white rounded-lg shadow-md overflow-hidden mt-6">
+            <!-- Header Colapsable -->
+            <button
+              @click="mostrarPrivacidad = !mostrarPrivacidad"
+              class="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+            >
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                  <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                  </svg>
+                </div>
+                <div class="text-left">
+                  <h2 class="text-xl font-bold text-gray-800">Configuración de Privacidad</h2>
+                  <p class="text-sm text-gray-600">Controla qué información es visible</p>
+                </div>
+              </div>
+              <svg 
+                class="w-6 h-6 text-gray-400 transition-transform duration-200"
+                :class="{ 'transform rotate-180': mostrarPrivacidad }"
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+
+            <!-- Contenido Colapsable -->
+            <div v-show="mostrarPrivacidad" class="px-6 pb-6">
+              <!-- Nota informativa -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <div class="flex items-start">
+                <svg class="w-5 h-5 text-blue-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p class="text-sm text-blue-800">
+                  Tu docente podrá ver tu información por motivos académicos.
+                </p>
+              </div>
+            </div>
+            
+            <div class="space-y-4">
+              <!-- Perfil Público -->
+              <div class="flex items-start p-4 bg-gray-50 rounded-lg">
+                <input 
+                  type="checkbox" 
+                  v-model="privacidad.perfil_publico" 
+                  id="perfil_publico"
+                  class="mt-1 mr-3 h-5 w-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                />
+                <label for="perfil_publico" class="flex-1 cursor-pointer">
+                  <span class="font-medium text-gray-800">Perfil Público</span>
+                  <p class="text-sm text-gray-500">Permite que otros usuarios vean tu perfil. Si está desactivado, solo mostrarás tu nombre y foto.</p>
+                </label>
+              </div>
+
+              <!-- Opciones de privacidad (solo si el perfil es público) -->
+              <div v-if="privacidad.perfil_publico" class="pl-8 space-y-3 border-l-2 border-primary-200">
+                <label class="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded transition">
+                  <input type="checkbox" v-model="privacidad.mostrar_email_personal" class="mr-3 h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500" />
+                  <span class="text-gray-700">Mostrar email personal</span>
+                </label>
+
+                <label class="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded transition">
+                  <input type="checkbox" v-model="privacidad.mostrar_email_academico" class="mr-3 h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500" />
+                  <span class="text-gray-700">Mostrar email académico</span>
+                </label>
+
+                <label class="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded transition">
+                  <input type="checkbox" v-model="privacidad.mostrar_telefono" class="mr-3 h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500" />
+                  <span class="text-gray-700">Mostrar teléfono</span>
+                </label>
+
+                <label class="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded transition">
+                  <input type="checkbox" v-model="privacidad.mostrar_fecha_nacimiento" class="mr-3 h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500" />
+                  <span class="text-gray-700">Mostrar fecha de nacimiento</span>
+                </label>
+
+                <label class="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded transition">
+                  <input type="checkbox" v-model="privacidad.mostrar_centro_educativo" class="mr-3 h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500" />
+                  <span class="text-gray-700">Mostrar centro educativo</span>
+                </label>
+
+                <label class="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded transition">
+                  <input type="checkbox" v-model="privacidad.mostrar_carrera" class="mr-3 h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500" />
+                  <span class="text-gray-700">Mostrar carrera</span>
+                </label>
+
+                <label class="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded transition">
+                  <input type="checkbox" v-model="privacidad.mostrar_horas_voluntariado" class="mr-3 h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500" />
+                  <span class="text-gray-700">Mostrar horas de voluntariado</span>
+                </label>
+              </div>
+
+              <!-- Botón para guardar privacidad -->
+              <div class="pt-4">
+                <button
+                  @click="guardarPrivacidad"
+                  :disabled="guardandoPrivacidad"
+                  class="w-full px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                >
+                  {{ guardandoPrivacidad ? 'Guardando...' : 'Guardar Configuración de Privacidad' }}
+                </button>
+              </div>
+            </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -302,10 +557,25 @@ const usuario = ref(null);
 const centrosEducativos = ref([]);
 const carreras = ref([]);
 const guardando = ref(false);
+const guardandoPrivacidad = ref(false);
+const modoEdicion = ref(false);
+const mostrarPrivacidad = ref(false);
 const mensaje = ref('');
 const mensajeTipo = ref('success');
 const fotoPerfil = ref(null);
 const fileInput = ref(null);
+
+// Configuración de privacidad
+const privacidad = ref({
+  perfil_publico: true,
+  mostrar_email_personal: false,
+  mostrar_email_academico: false,
+  mostrar_telefono: false,
+  mostrar_fecha_nacimiento: false,
+  mostrar_centro_educativo: true,
+  mostrar_carrera: true,
+  mostrar_horas_voluntariado: true
+});
 
 const form = ref({
   Nombres: '',
@@ -326,21 +596,17 @@ onMounted(async () => {
     const token = localStorage.getItem('token');
     const usuarioGuardado = localStorage.getItem('usuario');
 
-    console.log('🔍 Debug - Token:', token ? token.substring(0, 20) + '...' : 'NO HAY TOKEN');
-    console.log('🔍 Debug - Usuario:', usuarioGuardado ? 'EXISTE' : 'NO EXISTE');
-
     if (!token || !usuarioGuardado) {
-      console.error('❌ No hay token o usuario, redirigiendo a login');
       window.location.href = '/';
       return;
     }
 
     usuario.value = JSON.parse(usuarioGuardado);
-    console.log('🔍 Debug - Usuario cargado:', usuario.value.Nombres);
     
     cargarPerfil();
     cargarCentrosEducativos();
     cargarFotoPerfil();
+    cargarPrivacidad();
     // Las carreras se cargarán cuando se seleccione un centro
   }
 });
@@ -351,13 +617,10 @@ const cargarPerfil = async () => {
     const token = localStorage.getItem('token');
     
     if (!token) {
-      console.error('No hay token de autenticación');
       window.location.href = '/';
       return;
     }
 
-    console.log('Token encontrado:', token.substring(0, 20) + '...');
-    
     const response = await fetch('http://localhost:3000/api/auth/perfil', {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -500,6 +763,7 @@ const actualizarPerfil = async () => {
       usuario.value = data.data;
       localStorage.setItem('usuario', JSON.stringify(data.data));
       mostrarMensaje('Perfil actualizado exitosamente', 'success');
+      modoEdicion.value = false; // Desactivar modo edición después de guardar
     } else {
       mostrarMensaje(data.mensaje || 'Error al actualizar perfil', 'error');
     }
@@ -546,6 +810,76 @@ const getRolNombre = () => {
   return roles[usuario.value?.ID_rol] || 'Usuario';
 };
 
+// Cargar configuración de privacidad
+const cargarPrivacidad = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch('http://localhost:3000/api/privacidad/mi-configuracion', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      privacidad.value = data.data;
+    }
+  } catch (error) {
+    console.error('Error al cargar configuración de privacidad:', error);
+  }
+};
+
+// Funciones helper para obtener nombres
+const getCentroNombre = (id) => {
+  if (!id) return 'No seleccionado';
+  const centro = centrosEducativos.value.find(c => c.ID === id);
+  return centro ? centro.Nombre : 'No encontrado';
+};
+
+const getCarreraNombre = (id) => {
+  if (!id) return 'No seleccionada';
+  const carrera = carreras.value.find(c => c.ID === id);
+  return carrera ? carrera.Nombre : 'No encontrada';
+};
+
+// Cancelar edición
+const cancelarEdicion = () => {
+  modoEdicion.value = false;
+  // Recargar datos originales
+  cargarPerfil();
+};
+
+// Guardar configuración de privacidad
+const guardarPrivacidad = async () => {
+  guardandoPrivacidad.value = true;
+
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch('http://localhost:3000/api/privacidad/mi-configuracion', {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(privacidad.value)
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      mostrarMensaje('Configuración de privacidad actualizada', 'success');
+    } else {
+      mostrarMensaje(data.mensaje || 'Error al guardar configuración', 'error');
+    }
+  } catch (error) {
+    console.error('Error al guardar configuración:', error);
+    mostrarMensaje('Error al guardar configuración de privacidad', 'error');
+  } finally {
+    guardandoPrivacidad.value = false;
+  }
+};
+
 // Volver al panel
 const volverPanel = () => {
   window.location.href = '/panel';
@@ -566,7 +900,6 @@ const cargarFotoPerfil = async () => {
     const token = localStorage.getItem('token');
     
     if (!token) {
-      console.log('No hay token, saltando carga de foto');
       return;
     }
 
@@ -581,11 +914,10 @@ const cargarFotoPerfil = async () => {
       const data = await response.json();
       if (data.success && data.data) {
         fotoPerfil.value = data.data.imagen_url;
-        console.log('Referencia MySQL:', data.data.referencia_mysql);
       }
     }
   } catch (error) {
-    console.log('No hay foto de perfil o error al cargar:', error);
+    // Silenciar error si no hay foto
   }
 };
 
@@ -637,7 +969,6 @@ const seleccionarFoto = async (event) => {
         if (data.success) {
           fotoPerfil.value = base64;
           mostrarMensaje('Foto de perfil actualizada exitosamente', 'success');
-          console.log('Referencia MySQL:', data.data.referencia_mysql);
         } else {
           mostrarMensaje(data.mensaje || 'Error al subir foto', 'error');
         }

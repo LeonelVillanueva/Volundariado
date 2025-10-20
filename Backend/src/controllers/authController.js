@@ -1,4 +1,5 @@
 const Usuario = require('../models/Usuario');
+const CentroEducativo = require('../models/CentroEducativo');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -145,6 +146,19 @@ exports.login = async (req, res) => {
       });
     }
 
+    // Verificar estado de aprobación (solo para docentes)
+    if (usuario.ID_rol === 4 && usuario.Estado_aprobacion !== 'Aprobado') {
+      const mensajeAprobacion = usuario.Estado_aprobacion === 'Pendiente'
+        ? 'Tu cuenta está pendiente de aprobación por un administrador. Por favor espera a que tu cuenta sea verificada.'
+        : 'Tu cuenta fue rechazada. Contacta al administrador para más información.';
+      
+      return res.status(403).json({
+        success: false,
+        mensaje: mensajeAprobacion,
+        estado_aprobacion: usuario.Estado_aprobacion
+      });
+    }
+
     // Generar token JWT
     const token = jwt.sign(
       {
@@ -172,6 +186,124 @@ exports.login = async (req, res) => {
     res.status(500).json({
       success: false,
       mensaje: 'Error al iniciar sesión',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Registro de nuevo usuario
+ */
+exports.registro = async (req, res) => {
+  try {
+    const {
+      nombres,
+      apellidos,
+      usuario_nombre,
+      clave,
+      id_rol,
+      email_personal,
+      email_academico,
+      telefono,
+      fecha_nacimiento,
+      es_estudiante,
+      id_centro_educativo,
+      nuevo_centro
+    } = req.body;
+
+    // Validar campos requeridos
+    if (!nombres || !apellidos || !usuario_nombre || !clave || !id_rol || !email_personal) {
+      return res.status(400).json({
+        success: false,
+        mensaje: 'Nombre, apellido, usuario, contraseña, email personal y rol son requeridos'
+      });
+    }
+
+    // Validar email académico obligatorio para docentes
+    if (id_rol === 4 && !email_academico) {
+      return res.status(400).json({
+        success: false,
+        mensaje: 'El email académico es requerido para docentes'
+      });
+    }
+
+    // Validar que el nombre de usuario no exista
+    const usuarioExistente = await Usuario.obtenerPorUsuarioNombre(usuario_nombre);
+    if (usuarioExistente) {
+      return res.status(400).json({
+        success: false,
+        mensaje: 'El nombre de usuario ya está en uso'
+      });
+    }
+
+    // Encriptar contraseña
+    const claveEncriptada = await bcrypt.hash(clave, 10);
+
+    // Variable para almacenar el ID del centro
+    let centroId = id_centro_educativo;
+
+    // Si es docente y va a crear un nuevo centro
+    if (id_rol === 4 && nuevo_centro && nuevo_centro.nombre) {
+      try {
+        const centroCreado = await CentroEducativo.crear({
+          nombre: nuevo_centro.nombre,
+          direccion: nuevo_centro.direccion,
+          ciudad: nuevo_centro.ciudad,
+          telefono: nuevo_centro.telefono,
+          email: nuevo_centro.email
+        });
+        centroId = centroCreado.id;
+      } catch (error) {
+        return res.status(400).json({
+          success: false,
+          mensaje: 'Error al crear el centro educativo',
+          error: error.message
+        });
+      }
+    }
+
+    // Determinar estado de aprobación (docentes requieren aprobación)
+    const estadoAprobacion = (id_rol === 4) ? 'Pendiente' : 'Aprobado';
+
+    // Crear usuario
+    const nuevoUsuario = await Usuario.crear({
+      nombres,
+      apellidos,
+      email_personal,
+      email_academico,
+      telefono,
+      fecha_nacimiento,
+      es_estudiante: es_estudiante || false,
+      id_centro_educativo: centroId,
+      num_cuenta: null,
+      id_carrera: null,
+      estado_aprobacion: estadoAprobacion,
+      usuario_nombre,
+      clave: claveEncriptada, // Usar contraseña hasheada
+      id_rol
+    });
+
+    // Mensaje diferente para docentes pendientes
+    const mensaje = (id_rol === 4) 
+      ? 'Registro exitoso. Tu cuenta está pendiente de aprobación por un administrador.'
+      : 'Usuario registrado exitosamente';
+
+    res.status(201).json({
+      success: true,
+      mensaje: mensaje,
+      data: {
+        id: nuevoUsuario.id,
+        usuario_nombre: nuevoUsuario.usuario_nombre,
+        nombres: nuevoUsuario.nombres,
+        apellidos: nuevoUsuario.apellidos,
+        requiere_aprobacion: id_rol === 4
+      }
+    });
+  } catch (error) {
+    console.error('Error en registro:', error);
+    res.status(500).json({
+      success: false,
+      mensaje: 'Error al registrar usuario',
       error: error.message
     });
   }

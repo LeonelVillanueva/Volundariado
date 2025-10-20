@@ -43,7 +43,16 @@ exports.obtenerTodos = async (req, res) => {
 exports.obtenerPorId = async (req, res) => {
   try {
     const { id } = req.params;
-    const usuario = await Usuario.obtenerPorId(id);
+    const idSolicitante = req.usuario?.id || null;
+    const idRolSolicitante = req.usuario?.id_rol || null;
+    
+    // Obtener perfil filtrado según privacidad
+    // Docentes (4) y Administradores (6) siempre ven todo
+    const usuario = await Usuario.obtenerPerfilPublico(
+      parseInt(id), 
+      idSolicitante, 
+      idRolSolicitante
+    );
 
     if (!usuario) {
       return res.status(404).json({
@@ -52,6 +61,7 @@ exports.obtenerPorId = async (req, res) => {
       });
     }
 
+    // Nunca enviar la contraseña
     delete usuario.Clave;
 
     res.json({

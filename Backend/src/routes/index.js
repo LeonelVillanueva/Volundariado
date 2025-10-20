@@ -13,6 +13,8 @@ const carreraRoutes = require('./carreraRoutes');
 const permisoRoutes = require('./permisoRoutes');
 const fotoPerfilRoutes = require('./fotoPerfilRoutes');
 const verificacionRoutes = require('./verificacionRoutes');
+const privacidadRoutes = require('./privacidadRoutes');
+const aprobacionRoutes = require('./aprobacionRoutes');
 
 /**
  * Configuración central de todas las rutas de la API
@@ -36,7 +38,8 @@ router.get('/', (req, res) => {
       carreras: '/api/carreras',
       permisos: '/api/permisos',
       fotos_perfil: '/api/fotos-perfil',
-      verificacion: '/api/verificacion'
+      verificacion: '/api/verificacion',
+      privacidad: '/api/privacidad'
     },
     documentacion: {
       postman: 'Importa la colección de Postman para ver todos los endpoints',
@@ -77,6 +80,12 @@ router.use('/fotos-perfil', fotoPerfilRoutes);
 
 // Rutas de verificación de estudiantes
 router.use('/verificacion', verificacionRoutes);
+
+// Rutas de configuración de privacidad
+router.use('/privacidad', privacidadRoutes);
+
+// Rutas de aprobación de docentes
+router.use('/aprobaciones', aprobacionRoutes);
 
 module.exports = router;
 

@@ -237,6 +237,117 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           const SizedBox(height: 24),
 
+                          // Separador
+                          Row(
+                            children: [
+                              const Expanded(child: Divider(color: Colors.grey)),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                child: Text(
+                                  'o',
+                                  style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                                ),
+                              ),
+                              const Expanded(child: Divider(color: Colors.grey)),
+                            ],
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          // Botones de Registro
+                          const Text(
+                            '¿No tienes cuenta? Regístrate como:',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF166534),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          Row(
+                            children: [
+                              // Botón Estudiante/Voluntario
+                              Expanded(
+                                child: InkWell(
+                                  onTap: () {
+                                    Navigator.pushNamed(context, '/registro-voluntario');
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [Color(0xFFF0FDF4), Color(0xFFDCFCE7)],
+                                      ),
+                                      border: Border.all(color: const Color(0xFF86EFAC), width: 2),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Image.asset(
+                                          'assets/images/Vl_img.png',
+                                          width: 48,
+                                          height: 48,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        const Text(
+                                          'Estudiante/\nVoluntario',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF16A34A),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              // Botón Docente
+                              Expanded(
+                                child: InkWell(
+                                  onTap: () {
+                                    Navigator.pushNamed(context, '/registro-docente');
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [Color(0xFFEFF6FF), Color(0xFFDBEAFE)],
+                                      ),
+                                      border: Border.all(color: const Color(0xFF93C5FD), width: 2),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Image.asset(
+                                          'assets/images/Dc_img.png',
+                                          width: 48,
+                                          height: 48,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        const Text(
+                                          'Docente',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF2563EB),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 24),
+
                           // Credenciales de prueba
                           Container(
                             padding: const EdgeInsets.all(16),

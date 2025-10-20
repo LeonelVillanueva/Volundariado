@@ -68,11 +68,37 @@ class AuthProvider with ChangeNotifier {
         return false;
       }
     } catch (e) {
-      _error = e.toString();
+      _error = _convertirMensajeAmigable(e.toString());
       _isLoading = false;
       notifyListeners();
       return false;
     }
+  }
+  
+  String _convertirMensajeAmigable(String mensajeOriginal) {
+    final mensajes = {
+      'Credenciales inválidas': 'Usuario o contraseña incorrectos',
+      'Usuario y contraseña son requeridos': 'Por favor completa todos los campos',
+    };
+    
+    // Buscar mensaje exacto
+    if (mensajes[mensajeOriginal] != null) {
+      return mensajes[mensajeOriginal]!;
+    }
+    
+    // Buscar por palabra clave
+    if (mensajeOriginal.contains('pendiente de aprobación')) {
+      return 'Tu cuenta está en revisión. Te notificaremos cuando sea aprobada.';
+    }
+    if (mensajeOriginal.contains('rechazada')) {
+      return 'Tu solicitud fue rechazada. Contacta al administrador.';
+    }
+    if (mensajeOriginal.contains('inactiv')) {
+      return 'Tu cuenta está inactiva. Contacta al administrador.';
+    }
+    
+    // Mensaje genérico
+    return 'Ocurrió un error. Por favor intenta de nuevo.';
   }
   
   /// Logout
