@@ -12,6 +12,9 @@ const { verificarAutenticacion } = require('../middleware/auth');
 // Obtener docentes pendientes de aprobación
 router.get('/docentes/pendientes', verificarAutenticacion, aprobacionController.obtenerDocentesPendientes);
 
+// Obtener conteo de docentes pendientes (para notificaciones)
+router.get('/conteo-pendientes', verificarAutenticacion, aprobacionController.obtenerConteoPendientes);
+
 // Obtener estadísticas de aprobaciones
 router.get('/estadisticas', verificarAutenticacion, aprobacionController.obtenerEstadisticas);
 

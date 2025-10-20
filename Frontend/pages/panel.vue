@@ -48,15 +48,19 @@
 
           <!-- Aprobar Docentes (solo Admins) -->
           <li v-if="usuario?.ID_rol === 6">
-            <button
-              @click="irAAprobaciones"
-              class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-primary-50 transition group"
-            >
-              <svg class="w-5 h-5 text-primary-600 group-hover:text-primary-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-              <span class="font-medium text-gray-700 group-hover:text-primary-700">Aprobar Docentes</span>
-            </button>
+            <div class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-primary-50 transition group">
+              <button
+                @click="irAAprobaciones"
+                class="flex items-center space-x-3 flex-1"
+              >
+                <svg class="w-5 h-5 text-primary-600 group-hover:text-primary-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span class="font-medium text-gray-700 group-hover:text-primary-700">Aprobar Docentes</span>
+              </button>
+              <!-- Notificaciones integradas -->
+              <NotificationBadge />
+            </div>
           </li>
 
           <!-- Divider -->
@@ -186,6 +190,8 @@
 </template>
 
 <script setup>
+import NotificationBadge from '~/components/NotificationBadge.vue'
+
 definePageMeta({
   layout: false
 });

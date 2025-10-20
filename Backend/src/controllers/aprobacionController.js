@@ -163,6 +163,50 @@ exports.rechazarDocente = async (req, res) => {
 };
 
 /**
+ * Obtener conteo de docentes pendientes (para notificaciones)
+ */
+exports.obtenerConteoPendientes = async (req, res) => {
+  try {
+    // Verificar que el usuario sea administrador (ID_rol = 6)
+    if (req.usuario.id_rol !== 6) {
+      return res.status(403).json({
+        success: false,
+        mensaje: 'Solo los administradores pueden ver conteo de pendientes'
+      });
+    }
+
+    const { pool } = require('../config/database');
+    
+    const query = `
+      SELECT 
+        COUNT(*) as pendientes,
+        MIN(created_at) as mas_antigua,
+        MAX(created_at) as mas_reciente
+      FROM Usuarios
+      WHERE ID_rol = 4 AND Estado_aprobacion = 'Pendiente'
+    `;
+
+    const [resultado] = await pool.execute(query);
+
+    res.json({
+      success: true,
+      data: {
+        pendientes: resultado[0].pendientes,
+        mas_antigua: resultado[0].mas_antigua,
+        mas_reciente: resultado[0].mas_reciente
+      }
+    });
+  } catch (error) {
+    console.error('Error al obtener conteo de pendientes:', error);
+    res.status(500).json({
+      success: false,
+      mensaje: 'Error al obtener conteo de pendientes',
+      error: error.message
+    });
+  }
+};
+
+/**
  * Obtener estadísticas de aprobaciones
  */
 exports.obtenerEstadisticas = async (req, res) => {
