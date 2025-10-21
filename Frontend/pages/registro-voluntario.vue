@@ -27,6 +27,9 @@
                   v-model="form.nombres"
                   type="text"
                   placeholder="Tu nombre"
+                  pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+"
+                  title="Solo se permiten letras y espacios"
+                  @keypress="soloLetras"
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   required
                 />
@@ -39,6 +42,9 @@
                   v-model="form.apellidos"
                   type="text"
                   placeholder="Tu apellido"
+                  pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+"
+                  title="Solo se permiten letras y espacios"
+                  @keypress="soloLetras"
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   required
                 />
@@ -121,7 +127,11 @@
                 <input
                   v-model="form.telefono"
                   type="tel"
-                  placeholder="+504 0000-0000"
+                  pattern="[0-9]{8}"
+                  maxlength="8"
+                  placeholder="12345678"
+                  title="Debe contener exactamente 8 dígitos"
+                  @keypress="soloNumeros"
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
@@ -271,6 +281,22 @@ const handleRegistro = async () => {
     mensajeTipo.value = 'error';
   } finally {
     loading.value = false;
+  }
+};
+
+// Funciones para validar entrada de teclado
+const soloLetras = (event) => {
+  const char = String.fromCharCode(event.keyCode);
+  const regex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]$/;
+  if (!regex.test(char)) {
+    event.preventDefault();
+  }
+};
+
+const soloNumeros = (event) => {
+  const char = String.fromCharCode(event.keyCode);
+  if (!/^[0-9]$/.test(char)) {
+    event.preventDefault();
   }
 };
 </script>

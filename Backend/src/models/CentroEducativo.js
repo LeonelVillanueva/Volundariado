@@ -20,11 +20,13 @@ class CentroEducativo {
           Ciudad VARCHAR(100) NULL COMMENT 'Ciudad donde se ubica',
           Telefono VARCHAR(20) NULL COMMENT 'Teléfono de contacto',
           Email VARCHAR(150) NULL COMMENT 'Email de contacto',
+          Dominio_email VARCHAR(100) NULL COMMENT 'Dominio del correo institucional (ej: @unitec.edu)',
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Fecha de creación',
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Fecha de actualización',
           
           INDEX idx_nombre (Nombre),
-          INDEX idx_ciudad (Ciudad)
+          INDEX idx_ciudad (Ciudad),
+          INDEX idx_dominio_email (Dominio_email)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
       `;
       
@@ -38,14 +40,14 @@ class CentroEducativo {
   }
 
   static async crear(datos) {
-    const { nombre, direccion = null, ciudad = null, telefono = null, email = null } = datos;
+    const { nombre, direccion = null, ciudad = null, telefono = null, email = null, dominio_email = null } = datos;
     const query = `
-      INSERT INTO Centros_Educativos (Nombre, Direccion, Ciudad, Telefono, Email) 
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO Centros_Educativos (Nombre, Direccion, Ciudad, Telefono, Email, Dominio_email) 
+      VALUES (?, ?, ?, ?, ?, ?)
     `;
 
     try {
-      const [resultado] = await pool.execute(query, [nombre, direccion, ciudad, telefono, email]);
+      const [resultado] = await pool.execute(query, [nombre, direccion, ciudad, telefono, email, dominio_email]);
       return { id: resultado.insertId, ...datos };
     } catch (error) {
       console.error('Error al crear centro educativo:', error);
@@ -88,7 +90,7 @@ class CentroEducativo {
     const campos = [];
     const valores = [];
 
-    const camposPermitidos = ['Nombre', 'Direccion', 'Ciudad', 'Telefono', 'Email'];
+    const camposPermitidos = ['Nombre', 'Direccion', 'Ciudad', 'Telefono', 'Email', 'Dominio_email'];
     
     for (const [key, value] of Object.entries(datos)) {
       const campo = key.charAt(0).toUpperCase() + key.slice(1).replace(/_([a-z])/g, (_, letra) => '_' + letra);

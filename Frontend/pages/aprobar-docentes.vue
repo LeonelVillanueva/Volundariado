@@ -165,8 +165,43 @@
         </div>
       </div>
     </div>
+    
+    <!-- Sistema de Notificaciones Toast -->
+    <div
+      v-if="notificacion.visible"
+      :class="[
+        'fixed top-20 right-4 px-6 py-4 rounded-lg shadow-2xl transition-all transform',
+        notificacion.tipo === 'success' ? 'bg-green-500' : 'bg-red-500',
+        'text-white flex items-center space-x-3 animate-slide-in'
+      ]"
+    >
+      <svg v-if="notificacion.tipo === 'success'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <span class="font-medium">{{ notificacion.mensaje }}</span>
+    </div>
   </div>
 </template>
+
+<style scoped>
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
+}
+</style>
 
 <script setup>
 const docentesPendientes = ref([]);
@@ -176,6 +211,26 @@ const estadisticas = ref({
   aprobados: 0,
   rechazados: 0
 });
+
+// Sistema de notificaciones
+const notificacion = ref({
+  visible: false,
+  mensaje: '',
+  tipo: 'success' // 'success' o 'error'
+});
+
+const mostrarNotificacion = (mensaje, tipo = 'success') => {
+  notificacion.value = {
+    visible: true,
+    mensaje,
+    tipo
+  };
+  
+  // Auto-ocultar después de 3 segundos
+  setTimeout(() => {
+    notificacion.value.visible = false;
+  }, 3000);
+};
 const cargando = ref(false);
 
 // Cargar datos al montar
@@ -265,14 +320,14 @@ const aprobarDocente = async (idDocente) => {
 
     const data = await response.json();
     if (data.success) {
-      alert('Docente aprobado exitosamente');
+      mostrarNotificacion('✓ Docente aprobado exitosamente', 'success');
       cargarDatos();
     } else {
-      alert(data.mensaje || 'Error al aprobar docente');
+      mostrarNotificacion(data.mensaje || 'Error al aprobar docente', 'error');
     }
   } catch (error) {
     console.error('Error al aprobar docente:', error);
-    alert('Error al aprobar docente');
+    mostrarNotificacion('Error al aprobar docente', 'error');
   }
 };
 
@@ -293,14 +348,14 @@ const rechazarDocente = async (idDocente) => {
 
     const data = await response.json();
     if (data.success) {
-      alert('Docente rechazado');
+      mostrarNotificacion('Docente rechazado correctamente', 'success');
       cargarDatos();
     } else {
-      alert(data.mensaje || 'Error al rechazar docente');
+      mostrarNotificacion(data.mensaje || 'Error al rechazar docente', 'error');
     }
   } catch (error) {
     console.error('Error al rechazar docente:', error);
-    alert('Error al rechazar docente');
+    mostrarNotificacion('Error al rechazar docente', 'error');
   }
 };
 

@@ -67,7 +67,7 @@ exports.crear = async (req, res) => {
       });
     }
 
-    const { nombre, direccion, ciudad, telefono, email } = req.body;
+    const { nombre, direccion, ciudad, telefono, email, dominio_email } = req.body;
 
     // Validar campos requeridos
     if (!nombre) {
@@ -82,7 +82,8 @@ exports.crear = async (req, res) => {
       direccion,
       ciudad,
       telefono,
-      email
+      email,
+      dominio_email
     });
 
     // Asociar el centro al docente que lo creó
@@ -109,7 +110,7 @@ exports.crear = async (req, res) => {
 exports.actualizar = async (req, res) => {
   try {
     const { id } = req.params;
-    const { nombre, direccion, ciudad, telefono, email } = req.body;
+    const { nombre, direccion, ciudad, telefono, email, dominio_email } = req.body;
 
     // Verificar que el usuario sea Docente
     if (req.usuario.id_rol !== 4) {
@@ -133,6 +134,7 @@ exports.actualizar = async (req, res) => {
     if (ciudad !== undefined) datosActualizar.ciudad = ciudad;
     if (telefono !== undefined) datosActualizar.telefono = telefono;
     if (email !== undefined) datosActualizar.email = email;
+    if (dominio_email !== undefined) datosActualizar.dominio_email = dominio_email;
 
     const actualizado = await CentroEducativo.actualizar(parseInt(id), datosActualizar);
 

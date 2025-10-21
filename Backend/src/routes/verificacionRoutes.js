@@ -20,5 +20,8 @@ router.post('/rechazar/:id_estudiante', verificarAutenticacion, verificacionCont
 // Remover estudiante del centro
 router.delete('/remover/:id_estudiante', verificarAutenticacion, verificacionController.removerEstudiante);
 
+// Obtener estado de verificación de un estudiante específico
+router.get('/estado/:id_estudiante', verificarAutenticacion, verificacionController.obtenerEstadoVerificacion);
+
 module.exports = router;
 

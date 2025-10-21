@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../services/api_service.dart';
 
 class RegistroVoluntarioScreen extends StatefulWidget {
@@ -56,6 +57,38 @@ class _RegistroVoluntarioScreenState extends State<RegistroVoluntarioScreen> {
       return;
     }
 
+    // VALIDACIÓN: Email personal
+    if (_emailPersonalController.text.isNotEmpty && 
+        !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(_emailPersonalController.text)) {
+      setState(() {
+        _mensaje = 'El email personal no es válido. Debe contener @ y un dominio válido';
+        _esExito = false;
+      });
+      return;
+    }
+
+    // VALIDACIÓN: Email académico (si se proporciona)
+    if (_emailAcademicoController.text.isNotEmpty && 
+        !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(_emailAcademicoController.text)) {
+      setState(() {
+        _mensaje = 'El email académico no es válido. Debe contener @ y un dominio válido';
+        _esExito = false;
+      });
+      return;
+    }
+
+    // VALIDACIÓN: Teléfono (8 dígitos)
+    if (_telefonoController.text.isNotEmpty) {
+      final digitos = _telefonoController.text.replaceAll(RegExp(r'\D'), '');
+      if (digitos.length != 8) {
+        setState(() {
+          _mensaje = 'El teléfono debe tener exactamente 8 dígitos';
+          _esExito = false;
+        });
+        return;
+      }
+    }
+
     setState(() => _cargando = true);
 
     try {
@@ -111,6 +144,9 @@ class _RegistroVoluntarioScreenState extends State<RegistroVoluntarioScreen> {
     final mensajes = {
       'El nombre de usuario ya está en uso': 'Este usuario ya existe. Elige otro nombre de usuario.',
       'El email personal ya está registrado': 'Este email ya está registrado. Usa otro email.',
+      'El email personal no es válido. Debe contener @ y un dominio válido': 'El email personal no es válido. Verifica el formato.',
+      'El email académico no es válido. Debe contener @ y un dominio válido': 'El email académico no es válido. Verifica el formato.',
+      'El teléfono debe tener exactamente 8 dígitos': 'El teléfono debe tener exactamente 8 dígitos.',
       'Nombre, apellido, usuario, contraseña, email personal y rol son requeridos': 'Por favor completa todos los campos obligatorios.',
     };
     
@@ -182,6 +218,9 @@ class _RegistroVoluntarioScreenState extends State<RegistroVoluntarioScreen> {
                                     borderSide: BorderSide(color: Color(0xFF16A34A)),
                                   ),
                                 ),
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]')),
+                                ],
                                 validator: (value) => value?.isEmpty ?? true ? 'Requerido' : null,
                               ),
                             ),
@@ -196,6 +235,9 @@ class _RegistroVoluntarioScreenState extends State<RegistroVoluntarioScreen> {
                                     borderSide: BorderSide(color: Color(0xFF16A34A)),
                                   ),
                                 ),
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]')),
+                                ],
                                 validator: (value) => value?.isEmpty ?? true ? 'Requerido' : null,
                               ),
                             ),
@@ -313,9 +355,15 @@ class _RegistroVoluntarioScreenState extends State<RegistroVoluntarioScreen> {
                                 controller: _telefonoController,
                                 decoration: const InputDecoration(
                                   labelText: 'Teléfono',
+                                  hintText: '12345678',
+                                  helperText: '8 dígitos',
                                   border: OutlineInputBorder(),
                                 ),
-                                keyboardType: TextInputType.phone,
+                                keyboardType: TextInputType.number,
+                                maxLength: 8,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
                               ),
                             ),
                             const SizedBox(width: 12),

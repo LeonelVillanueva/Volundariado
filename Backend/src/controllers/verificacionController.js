@@ -44,7 +44,7 @@ exports.verificarEstudiante = async (req, res) => {
       });
     }
 
-    // Verificar al estudiante
+    // Verificar al estudiante (solo cuando el docente lo apruebe)
     await Usuario.actualizar(parseInt(id_estudiante), {
       Esta_verificado: 1
     });
@@ -97,7 +97,7 @@ exports.rechazarEstudiante = async (req, res) => {
       });
     }
 
-    // Rechazar (poner verificación en 0)
+    // Rechazar verificación (poner en 0)
     await Usuario.actualizar(parseInt(id_estudiante), {
       Esta_verificado: 0
     });
@@ -182,11 +182,11 @@ exports.removerEstudiante = async (req, res) => {
       console.log(`⚠️ Docente ${req.usuario.id} se está removiendo del centro. Hay ${totalOtrosDocentes} docente(s) más en el centro.`);
     }
 
-    // Remover del centro (limpiar datos de centro y carrera)
+    // Remover del centro (limpiar datos de centro, carrera y verificación)
     await Usuario.actualizar(parseInt(id_estudiante), {
       ID_centro_educativo: null,
       ID_carrera: null,
-      Esta_verificado: 0
+      Esta_verificado: 0 // Al remover del centro, pierde la verificación
     });
 
     const estudianteActualizado = await Usuario.obtenerPorId(parseInt(id_estudiante));
@@ -305,6 +305,44 @@ exports.obtenerPendientes = async (req, res) => {
     res.status(500).json({
       success: false,
       mensaje: 'Error al obtener estudiantes pendientes',
+      error: error.message
+    });
+  }
+};
+
+// Obtener estado de verificación de un estudiante específico
+exports.obtenerEstadoVerificacion = async (req, res) => {
+  try {
+    const { id_estudiante } = req.params;
+
+    // Obtener información del estudiante
+    const estudiante = await Usuario.obtenerPorId(parseInt(id_estudiante));
+
+    if (!estudiante) {
+      return res.status(404).json({
+        success: false,
+        mensaje: 'Estudiante no encontrado'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        id: estudiante.ID,
+        nombres: estudiante.Nombres,
+        apellidos: estudiante.Apellidos,
+        es_estudiante: estudiante.Es_estudiante,
+        esta_verificado: estudiante.Esta_verificado,
+        id_centro_educativo: estudiante.ID_centro_educativo,
+        id_carrera: estudiante.ID_carrera,
+        estado_verificacion: estudiante.Esta_verificado ? 'Verificado' : 'Pendiente'
+      }
+    });
+  } catch (error) {
+    console.error('Error al obtener estado de verificación:', error);
+    res.status(500).json({
+      success: false,
+      mensaje: 'Error al obtener estado de verificación',
       error: error.message
     });
   }

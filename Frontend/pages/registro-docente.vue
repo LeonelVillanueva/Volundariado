@@ -6,17 +6,25 @@
         <div class="flex items-center justify-center mb-3">
           <img src="/images/Dc_img.png" alt="Docente" class="w-16 h-16" />
         </div>
-        <h1 class="text-3xl font-bold text-blue-700 mb-1">Registro de Docente</h1>
-        <p class="text-sm text-blue-600 font-medium">Completa el formulario para crear tu cuenta</p>
+        <h1 class="text-3xl font-bold text-blue-700 mb-1">Registro de Docente - Paso {{ pasoActual }} de 2</h1>
+        <p class="text-sm text-blue-600 font-medium">
+          {{ pasoActual === 1 ? 'Información Personal' : 'Información Académica' }}
+        </p>
+        
+        <!-- Indicador de progreso -->
+        <div class="flex items-center justify-center gap-2 mt-4 max-w-md mx-auto">
+          <div class="flex-1 h-2 bg-blue-600 rounded-full"></div>
+          <div class="flex-1 h-2 rounded-full" :class="pasoActual >= 2 ? 'bg-blue-600' : 'bg-gray-300'"></div>
+        </div>
       </div>
 
       <!-- Formulario -->
       <div class="bg-white rounded-lg shadow-xl p-6">
-        <form @submit.prevent="handleRegistro">
-          <!-- Campos Obligatorios -->
-          <div class="mb-4">
+        <form @submit.prevent="pasoActual === 1 ? siguientePaso() : handleRegistro()">
+          <!-- PASO 1: INFORMACIÓN PERSONAL -->
+          <div v-if="pasoActual === 1" class="mb-4">
             <h3 class="text-base font-semibold text-gray-800 mb-3 pb-1 border-b border-gray-200">
-              Información Requerida <span class="text-red-500">*</span>
+              Información Personal <span class="text-red-500">*</span>
             </h3>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -27,6 +35,9 @@
                   v-model="form.nombres"
                   type="text"
                   placeholder="Tu nombre"
+                  pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+"
+                  title="Solo se permiten letras y espacios"
+                  @keypress="soloLetras"
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 />
@@ -39,6 +50,9 @@
                   v-model="form.apellidos"
                   type="text"
                   placeholder="Tu apellido"
+                  pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+"
+                  title="Solo se permiten letras y espacios"
+                  @keypress="soloLetras"
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 />
@@ -56,7 +70,7 @@
               />
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div class="mt-4">
               <!-- Email Personal -->
               <div>
                 <label class="block text-gray-700 font-medium mb-2">Email Personal <span class="text-red-500">*</span></label>
@@ -64,18 +78,6 @@
                   v-model="form.email_personal"
                   type="email"
                   placeholder="correo@ejemplo.com"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                />
-              </div>
-
-              <!-- Email Académico -->
-              <div>
-                <label class="block text-gray-700 font-medium mb-2">Email Académico <span class="text-red-500">*</span></label>
-                <input
-                  v-model="form.email_academico"
-                  type="email"
-                  placeholder="correo@universidad.edu"
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 />
@@ -124,7 +126,11 @@
                 <input
                   v-model="form.telefono"
                   type="tel"
-                  placeholder="+504 0000-0000"
+                  pattern="[0-9]{8}"
+                  maxlength="8"
+                  placeholder="12345678"
+                  title="Debe contener exactamente 8 dígitos"
+                  @keypress="soloNumeros"
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -141,9 +147,38 @@
             </div>
           </div>
 
-          <!-- Centro Educativo -->
-          <div class="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <h3 class="text-base font-semibold text-gray-800 mb-3">Centro Educativo</h3>
+          <!-- PASO 2: INFORMACIÓN ACADÉMICA -->
+          <div v-if="pasoActual === 2">
+            <!-- Mensaje informativo -->
+            <div class="mb-4 p-4 bg-blue-100 rounded-lg border border-blue-300">
+              <div class="flex items-start">
+                <svg class="w-5 h-5 text-blue-600 mt-0.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p class="text-sm text-blue-800">
+                  Tu email académico debe ser el correo oficial de tu institución educativa.
+                </p>
+              </div>
+            </div>
+
+            <!-- Email Académico -->
+            <div class="mb-4">
+              <label class="block text-gray-700 font-medium mb-2">Email Académico Institucional <span class="text-red-500">*</span></label>
+              <input
+                v-model="form.email_academico"
+                type="email"
+                placeholder="profesor@institucion.edu"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              />
+              <p class="text-xs text-gray-500 mt-1">
+                Debe ser tu correo oficial de la institución
+              </p>
+            </div>
+
+            <!-- Centro Educativo -->
+            <div class="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <h3 class="text-base font-semibold text-gray-800 mb-3">Centro Educativo</h3>
             
             <div class="mb-4">
               <label class="flex items-center space-x-3 cursor-pointer">
@@ -220,16 +255,36 @@
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-              <div>
-                <label class="block text-gray-700 font-medium mb-2">Email</label>
-                <input
-                  v-model="nuevoCentro.email"
-                  type="email"
-                  placeholder="info@universidad.edu"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-gray-700 font-medium mb-2">Email de Contacto</label>
+                  <input
+                    v-model="nuevoCentro.email"
+                    type="email"
+                    placeholder="info@universidad.edu"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label class="block text-gray-700 font-medium mb-2">
+                    Dominio Email Institucional
+                    <span class="text-xs text-gray-500">(opcional)</span>
+                  </label>
+                  <input
+                    v-model="nuevoCentro.dominio_email"
+                    type="text"
+                    placeholder="@unitec.edu"
+                    pattern="@[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,}"
+                    title="Debe iniciar con @ (ej: @unitec.edu)"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <p class="text-xs text-gray-500 mt-1">
+                    Ej: @unitec.edu
+                  </p>
+                </div>
               </div>
             </div>
+          </div>
           </div>
 
           <!-- Mensaje de Error/Éxito -->
@@ -241,10 +296,10 @@
           <div class="flex space-x-4">
             <button
               type="button"
-              @click="volver"
+              @click="pasoActual === 1 ? volver() : pasoAnterior()"
               class="flex-1 px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition duration-200"
             >
-              Volver
+              {{ pasoActual === 1 ? 'Cancelar' : 'Atrás' }}
             </button>
             <button
               type="submit"
@@ -256,7 +311,7 @@
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
               <span v-if="loading">Registrando...</span>
-              <span v-else>Registrarme</span>
+              <span v-else>{{ pasoActual === 1 ? 'Siguiente' : 'Registrarme' }}</span>
             </button>
           </div>
         </form>
@@ -288,7 +343,8 @@ const nuevoCentro = ref({
   direccion: '',
   ciudad: '',
   telefono: '',
-  email: ''
+  email: '',
+  dominio_email: ''
 });
 
 const tipoCentro = ref('existente');
@@ -296,6 +352,7 @@ const centros = ref([]);
 const loading = ref(false);
 const mensaje = ref('');
 const mensajeTipo = ref('');
+const pasoActual = ref(1); // Control de pasos (1 = Personal, 2 = Académico)
 
 // Cargar centros educativos al montar
 onMounted(async () => {
@@ -314,14 +371,69 @@ const volver = () => {
   navigateTo('/');
 };
 
+const siguientePaso = () => {
+  // Validar paso 1 antes de continuar
+  if (!form.value.nombres || !form.value.apellidos) {
+    mensaje.value = 'Nombre y apellido son requeridos';
+    mensajeTipo.value = 'error';
+    return;
+  }
+  if (!form.value.usuario_nombre) {
+    mensaje.value = 'El nombre de usuario es requerido';
+    mensajeTipo.value = 'error';
+    return;
+  }
+  if (!form.value.email_personal) {
+    mensaje.value = 'El email personal es requerido';
+    mensajeTipo.value = 'error';
+    return;
+  }
+  if (!form.value.clave || form.value.clave.length < 6) {
+    mensaje.value = 'La contraseña debe tener al menos 6 caracteres';
+    mensajeTipo.value = 'error';
+    return;
+  }
+  if (form.value.clave !== form.value.confirmar_clave) {
+    mensaje.value = 'Las contraseñas no coinciden';
+    mensajeTipo.value = 'error';
+    return;
+  }
+
+  // Todo válido, avanzar al paso 2
+  pasoActual.value = 2;
+  mensaje.value = '';
+};
+
+const pasoAnterior = () => {
+  pasoActual.value = 1;
+  mensaje.value = '';
+};
+
 const handleRegistro = async () => {
   loading.value = true;
   mensaje.value = '';
 
   try {
-    // Validar que las contraseñas coincidan
-    if (form.value.clave !== form.value.confirmar_clave) {
-      mensaje.value = 'Las contraseñas no coinciden';
+    // Validar email académico
+    if (!form.value.email_academico) {
+      mensaje.value = 'El email académico es requerido';
+      mensajeTipo.value = 'error';
+      loading.value = false;
+      return;
+    }
+
+    // Validar formato de email académico
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.value.email_academico)) {
+      mensaje.value = 'El email académico no es válido';
+      mensajeTipo.value = 'error';
+      loading.value = false;
+      return;
+    }
+
+    // Validar que se seleccione un centro (si es existente)
+    if (tipoCentro.value === 'existente' && !form.value.id_centro_educativo) {
+      mensaje.value = 'Debes seleccionar un centro educativo';
       mensajeTipo.value = 'error';
       loading.value = false;
       return;
@@ -361,7 +473,8 @@ const handleRegistro = async () => {
         direccion: nuevoCentro.value.direccion || null,
         ciudad: nuevoCentro.value.ciudad || null,
         telefono: nuevoCentro.value.telefono || null,
-        email: nuevoCentro.value.email || null
+        email: nuevoCentro.value.email || null,
+        dominio_email: nuevoCentro.value.dominio_email || null
       };
     }
 
@@ -402,7 +515,8 @@ const handleRegistro = async () => {
         direccion: '',
         ciudad: '',
         telefono: '',
-        email: ''
+        email: '',
+        dominio_email: ''
       };
 
       // Redirigir después de 3 segundos (más tiempo para leer el mensaje)
@@ -415,6 +529,7 @@ const handleRegistro = async () => {
         'El nombre de usuario ya está en uso': 'Este usuario ya existe. Elige otro nombre de usuario.',
         'El email personal ya está registrado': 'Este email ya está registrado. Usa otro email.',
         'El email académico es requerido para docentes': 'Debes proporcionar un email académico institucional.',
+        'El email académico no corresponde al dominio institucional del centro educativo seleccionado': 'El email académico no es válido para el centro educativo seleccionado. Verifica que sea tu correo institucional oficial.',
         'Nombre, apellido, usuario, contraseña, email personal y rol son requeridos': 'Por favor completa todos los campos obligatorios.',
         'Debes proporcionar el nombre del centro educativo': 'Si vas a crear un centro nuevo, debes proporcionar su nombre.',
         'Error al crear el centro educativo': 'No se pudo crear el centro educativo. Verifica los datos.',
@@ -429,6 +544,22 @@ const handleRegistro = async () => {
     mensajeTipo.value = 'error';
   } finally {
     loading.value = false;
+  }
+};
+
+// Funciones para validar entrada de teclado
+const soloLetras = (event) => {
+  const char = String.fromCharCode(event.keyCode);
+  const regex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]$/;
+  if (!regex.test(char)) {
+    event.preventDefault();
+  }
+};
+
+const soloNumeros = (event) => {
+  const char = String.fromCharCode(event.keyCode);
+  if (!/^[0-9]$/.test(char)) {
+    event.preventDefault();
   }
 };
 </script>

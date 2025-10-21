@@ -132,8 +132,8 @@
                 <div v-if="form.Es_estudiante" class="bg-gray-50 rounded-lg p-4">
                   <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-3">
-                      <div class="p-2 rounded-lg" :class="usuario?.Esta_verificado ? 'bg-green-100' : 'bg-yellow-100'">
-                        <svg v-if="usuario?.Esta_verificado" class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                      <div class="p-2 rounded-lg" :class="usuario?.Esta_verificado === 1 ? 'bg-green-100' : 'bg-yellow-100'">
+                        <svg v-if="usuario?.Esta_verificado === 1" class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                           <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                         </svg>
                         <svg v-else class="w-6 h-6 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
@@ -142,8 +142,11 @@
                       </div>
                       <div>
                         <p class="text-sm text-gray-600">Estado</p>
-                        <p class="text-sm font-semibold" :class="usuario?.Esta_verificado ? 'text-green-700' : 'text-yellow-700'">
-                          {{ usuario?.Esta_verificado ? 'Verificado' : 'Pendiente de Verificación' }}
+                        <p class="text-sm font-semibold" :class="usuario?.Esta_verificado === 1 ? 'text-green-700' : 'text-yellow-700'">
+                          {{ usuario?.Esta_verificado === 1 ? 'Verificado' : 'Pendiente de Verificación' }}
+                        </p>
+                        <p v-if="usuario?.Esta_verificado !== 1" class="text-xs text-gray-500 mt-1">
+                          Un docente debe aprobarte en tu centro educativo
                         </p>
                       </div>
                     </div>
@@ -294,6 +297,9 @@
                       v-model="form.Nombres"
                       type="text"
                       required
+                      pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+"
+                      title="Solo se permiten letras y espacios"
+                      @keypress="soloLetras"
                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:bg-gray-50 disabled:cursor-not-allowed"
                     >
                   </div>
@@ -303,6 +309,9 @@
                       v-model="form.Apellidos"
                       type="text"
                       required
+                      pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+"
+                      title="Solo se permiten letras y espacios"
+                      @keypress="soloLetras"
                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     >
                   </div>
@@ -335,6 +344,11 @@
                     <input
                       v-model="form.Telefono"
                       type="tel"
+                      pattern="[0-9]{8}"
+                      maxlength="8"
+                      placeholder="Ej: 12345678"
+                      title="Debe contener exactamente 8 dígitos"
+                      @keypress="soloNumeros"
                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     >
                   </div>
@@ -357,7 +371,7 @@
                     class="w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                   >
                   <label for="es_estudiante" class="text-sm font-medium text-gray-900 cursor-pointer">
-                    Soy estudiante
+                    Pertenezco a un centro educativo
                   </label>
                 </div>
 
@@ -367,9 +381,12 @@
                   
                   <!-- Centro Educativo -->
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Centro Educativo</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                      Centro Educativo <span class="text-red-500">*</span>
+                    </label>
                     <select
                       v-model.number="form.ID_centro_educativo"
+                      required
                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     >
                       <option :value="null">Seleccione un centro educativo</option>
@@ -382,22 +399,29 @@
                   <!-- Número de Cuenta -->
                   <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
-                      Número de Cuenta
-                      <span class="text-gray-500 text-xs">(o número de identidad: 0000-00000-0000)</span>
+                      Número de Cuenta <span class="text-red-500">*</span>
+                      <span class="text-gray-500 text-xs">(o número de identidad)</span>
                     </label>
                     <input
                       v-model="form.Num_cuenta"
                       type="text"
+                      required
+                      pattern="[0-9\-]+"
                       placeholder="0000-00000-0000"
+                      title="Solo números y guiones"
+                      @keypress="soloNumerosYGuion"
                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     >
                   </div>
 
                   <!-- Carrera -->
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Carrera</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                      Carrera <span class="text-red-500">*</span>
+                    </label>
                     <select
                       v-model.number="form.ID_carrera"
+                      required
                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       :disabled="!form.ID_centro_educativo"
                     >
@@ -718,12 +742,90 @@ watch(() => form.value.ID_centro_educativo, (nuevoCentro) => {
   }
 });
 
+// Función auxiliar para validar email
+const validarEmail = (email) => {
+  if (!email) return true; // Opcional
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return regex.test(email);
+};
+
+// Función auxiliar para validar teléfono (8 dígitos)
+const validarTelefono = (telefono) => {
+  if (!telefono) return true; // Opcional
+  const digitos = telefono.replace(/\D/g, '');
+  return digitos.length === 8;
+};
+
+// Funciones para validar entrada de teclado
+const soloLetras = (event) => {
+  const char = String.fromCharCode(event.keyCode);
+  const regex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]$/;
+  if (!regex.test(char)) {
+    event.preventDefault();
+  }
+};
+
+const soloNumeros = (event) => {
+  const char = String.fromCharCode(event.keyCode);
+  if (!/^[0-9]$/.test(char)) {
+    event.preventDefault();
+  }
+};
+
+const soloNumerosYGuion = (event) => {
+  const char = String.fromCharCode(event.keyCode);
+  if (!/^[0-9\-]$/.test(char)) {
+    event.preventDefault();
+  }
+};
+
 // Actualizar perfil
 const actualizarPerfil = async () => {
   guardando.value = true;
   mensaje.value = '';
 
   try {
+    // VALIDACIONES GENERALES
+    // Validar email personal
+    if (form.value.Email_personal && !validarEmail(form.value.Email_personal)) {
+      mostrarMensaje('El email personal no es válido. Debe contener @ y un dominio válido', 'error');
+      guardando.value = false;
+      return;
+    }
+
+    // Validar email académico
+    if (form.value.Email_academico && !validarEmail(form.value.Email_academico)) {
+      mostrarMensaje('El email académico no es válido. Debe contener @ y un dominio válido', 'error');
+      guardando.value = false;
+      return;
+    }
+
+    // Validar teléfono
+    if (form.value.Telefono && !validarTelefono(form.value.Telefono)) {
+      mostrarMensaje('El teléfono debe tener exactamente 8 dígitos', 'error');
+      guardando.value = false;
+      return;
+    }
+
+    // Validar campos de estudiante si está marcado como estudiante
+    if (form.value.Es_estudiante) {
+      if (!form.value.ID_centro_educativo) {
+        mostrarMensaje('Debe seleccionar un centro educativo', 'error');
+        guardando.value = false;
+        return;
+      }
+      if (!form.value.Num_cuenta || form.value.Num_cuenta.trim() === '') {
+        mostrarMensaje('Debe ingresar su número de cuenta o identidad', 'error');
+        guardando.value = false;
+        return;
+      }
+      if (!form.value.ID_carrera) {
+        mostrarMensaje('Debe seleccionar una carrera', 'error');
+        guardando.value = false;
+        return;
+      }
+    }
+
     const token = localStorage.getItem('token');
     
     const datosEnviar = {

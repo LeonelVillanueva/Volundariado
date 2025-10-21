@@ -2,6 +2,7 @@ const Usuario = require('../models/Usuario');
 const CentroEducativo = require('../models/CentroEducativo');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { validarEmail, validarTelefono, validarEmailAcademico, normalizarTelefono } = require('../utils/validaciones');
 
 /**
  * Controller de Autenticación
@@ -37,6 +38,50 @@ exports.registrar = async (req, res) => {
       });
     }
 
+    // VALIDACIÓN: Email personal debe ser válido
+    if (email_personal && !validarEmail(email_personal)) {
+      return res.status(400).json({
+        success: false,
+        mensaje: 'El email personal no es válido. Debe contener @ y un dominio válido'
+      });
+    }
+
+    // VALIDACIÓN: Teléfono debe tener exactamente 8 dígitos
+    if (telefono && !validarTelefono(telefono)) {
+      return res.status(400).json({
+        success: false,
+        mensaje: 'El teléfono debe tener exactamente 8 dígitos'
+      });
+    }
+
+    // VALIDACIÓN: Email académico para docentes
+    if (id_rol === 4 && id_centro_educativo) { // 4 = Docente
+      if (!email_academico) {
+        return res.status(400).json({
+          success: false,
+          mensaje: 'Los docentes deben proporcionar un email académico'
+        });
+      }
+
+      if (!validarEmail(email_academico)) {
+        return res.status(400).json({
+          success: false,
+          mensaje: 'El email académico no es válido. Debe contener @ y un dominio válido'
+        });
+      }
+
+      // Obtener el centro educativo para verificar el dominio
+      const centro = await CentroEducativo.obtenerPorId(id_centro_educativo);
+      if (centro && centro.Dominio_email) {
+        if (!validarEmailAcademico(email_academico, centro.Dominio_email)) {
+          return res.status(400).json({
+            success: false,
+            mensaje: 'El email académico no corresponde al dominio institucional del centro educativo seleccionado'
+          });
+        }
+      }
+    }
+
     // Verificar si el usuario ya existe
     const usuarioExistente = await Usuario.obtenerPorUsuarioNombre(usuario_nombre);
     if (usuarioExistente) {
@@ -57,6 +102,9 @@ exports.registrar = async (req, res) => {
       }
     }
 
+    // Normalizar teléfono (eliminar caracteres especiales)
+    const telefonoNormalizado = telefono ? normalizarTelefono(telefono) : null;
+
     // Encriptar contraseña
     const claveEncriptada = await bcrypt.hash(clave, 10);
 
@@ -66,7 +114,7 @@ exports.registrar = async (req, res) => {
       apellidos,
       email_personal,
       email_academico,
-      telefono,
+      telefono: telefonoNormalizado,
       fecha_nacimiento,
       es_estudiante: es_estudiante || false,
       id_centro_educativo,
@@ -219,11 +267,35 @@ exports.registro = async (req, res) => {
       });
     }
 
-    // Validar email académico obligatorio para docentes
+    // VALIDACIÓN: Email académico obligatorio para docentes
     if (id_rol === 4 && !email_academico) {
       return res.status(400).json({
         success: false,
         mensaje: 'El email académico es requerido para docentes'
+      });
+    }
+
+    // VALIDACIÓN: Email personal debe ser válido
+    if (email_personal && !validarEmail(email_personal)) {
+      return res.status(400).json({
+        success: false,
+        mensaje: 'El email personal no es válido. Debe contener @ y un dominio válido'
+      });
+    }
+
+    // VALIDACIÓN: Email académico debe ser válido
+    if (email_academico && !validarEmail(email_academico)) {
+      return res.status(400).json({
+        success: false,
+        mensaje: 'El email académico no es válido. Debe contener @ y un dominio válido'
+      });
+    }
+
+    // VALIDACIÓN: Teléfono debe tener exactamente 8 dígitos
+    if (telefono && !validarTelefono(telefono)) {
+      return res.status(400).json({
+        success: false,
+        mensaje: 'El teléfono debe tener exactamente 8 dígitos'
       });
     }
 
@@ -238,6 +310,9 @@ exports.registro = async (req, res) => {
 
     // Encriptar contraseña
     const claveEncriptada = await bcrypt.hash(clave, 10);
+    
+    // Normalizar teléfono
+    const telefonoNormalizado = telefono ? normalizarTelefono(telefono) : null;
 
     // Variable para almacenar el ID del centro
     let centroId = id_centro_educativo;
@@ -250,7 +325,8 @@ exports.registro = async (req, res) => {
           direccion: nuevo_centro.direccion,
           ciudad: nuevo_centro.ciudad,
           telefono: nuevo_centro.telefono,
-          email: nuevo_centro.email
+          email: nuevo_centro.email,
+          dominio_email: nuevo_centro.dominio_email
         });
         centroId = centroCreado.id;
       } catch (error) {
@@ -259,6 +335,19 @@ exports.registro = async (req, res) => {
           mensaje: 'Error al crear el centro educativo',
           error: error.message
         });
+      }
+    }
+
+    // VALIDACIÓN: Email académico para docentes debe coincidir con dominio institucional
+    if (id_rol === 4 && centroId && email_academico) {
+      const centro = await CentroEducativo.obtenerPorId(centroId);
+      if (centro && centro.Dominio_email) {
+        if (!validarEmailAcademico(email_academico, centro.Dominio_email)) {
+          return res.status(400).json({
+            success: false,
+            mensaje: 'El email académico no corresponde al dominio institucional del centro educativo seleccionado'
+          });
+        }
       }
     }
 
@@ -271,13 +360,14 @@ exports.registro = async (req, res) => {
       apellidos,
       email_personal,
       email_academico,
-      telefono,
+      telefono: telefonoNormalizado,
       fecha_nacimiento,
       es_estudiante: es_estudiante || false,
       id_centro_educativo: centroId,
       num_cuenta: null,
       id_carrera: null,
       estado_aprobacion: estadoAprobacion,
+      esta_verificado: false, // Siempre empezar como no verificado
       usuario_nombre,
       clave: claveEncriptada, // Usar contraseña hasheada
       id_rol
@@ -448,18 +538,92 @@ exports.actualizarPerfil = async (req, res) => {
       id_carrera
     } = req.body;
 
+    // VALIDACIONES antes de construir el objeto
+    // VALIDACIÓN: Email personal debe ser válido
+    if (email_personal !== undefined && email_personal && !validarEmail(email_personal)) {
+      return res.status(400).json({
+        success: false,
+        mensaje: 'El email personal no es válido. Debe contener @ y un dominio válido'
+      });
+    }
+
+    // VALIDACIÓN: Email académico debe ser válido
+    if (email_academico !== undefined && email_academico && !validarEmail(email_academico)) {
+      return res.status(400).json({
+        success: false,
+        mensaje: 'El email académico no es válido. Debe contener @ y un dominio válido'
+      });
+    }
+
+    // VALIDACIÓN: Teléfono debe tener exactamente 8 dígitos
+    if (telefono !== undefined && telefono && !validarTelefono(telefono)) {
+      return res.status(400).json({
+        success: false,
+        mensaje: 'El teléfono debe tener exactamente 8 dígitos'
+      });
+    }
+
+    // VALIDACIÓN: Email académico para docentes debe coincidir con dominio institucional
+    const usuarioActualTemp = await Usuario.obtenerPorId(req.usuario.id);
+    if (email_academico && id_centro_educativo && usuarioActualTemp.ID_rol === 4) { // 4 = Docente
+      const centro = await CentroEducativo.obtenerPorId(id_centro_educativo);
+      if (centro && centro.Dominio_email) {
+        if (!validarEmailAcademico(email_academico, centro.Dominio_email)) {
+          return res.status(400).json({
+            success: false,
+            mensaje: 'El email académico no corresponde al dominio institucional del centro educativo seleccionado'
+          });
+        }
+      }
+    }
+
     // Construir objeto de actualización solo con campos proporcionados
     const datosActualizar = {};
     if (nombres !== undefined) datosActualizar.nombres = nombres;
     if (apellidos !== undefined) datosActualizar.apellidos = apellidos;
     if (email_personal !== undefined) datosActualizar.email_personal = email_personal;
     if (email_academico !== undefined) datosActualizar.email_academico = email_academico;
-    if (telefono !== undefined) datosActualizar.telefono = telefono;
+    if (telefono !== undefined) datosActualizar.telefono = telefono ? normalizarTelefono(telefono) : null;
     if (fecha_nacimiento !== undefined) datosActualizar.fecha_nacimiento = fecha_nacimiento;
     if (es_estudiante !== undefined) datosActualizar.es_estudiante = es_estudiante;
     if (id_centro_educativo !== undefined) datosActualizar.id_centro_educativo = id_centro_educativo;
     if (num_cuenta !== undefined) datosActualizar.num_cuenta = num_cuenta;
     if (id_carrera !== undefined) datosActualizar.id_carrera = id_carrera;
+
+    // VALIDACIÓN: Si se marca como estudiante, validar campos obligatorios
+    if (es_estudiante === 1) {
+      if (!id_centro_educativo) {
+        return res.status(400).json({
+          success: false,
+          mensaje: 'Si eres estudiante, debes seleccionar un centro educativo'
+        });
+      }
+      if (!num_cuenta || num_cuenta.trim() === '') {
+        return res.status(400).json({
+          success: false,
+          mensaje: 'Si eres estudiante, debes proporcionar tu número de cuenta o identidad'
+        });
+      }
+      if (!id_carrera) {
+        return res.status(400).json({
+          success: false,
+          mensaje: 'Si eres estudiante, debes seleccionar una carrera'
+        });
+      }
+    }
+
+    // IMPORTANTE: Si el usuario cambia de no estudiante a estudiante, 
+    // o cambia de centro educativo, debe resetear la verificación
+    if (es_estudiante !== undefined || id_centro_educativo !== undefined) {
+      // Obtener el usuario actual para comparar
+      const usuarioActual = await Usuario.obtenerPorId(req.usuario.id);
+      
+      // Si está marcando como estudiante o cambiando centro, resetear verificación
+      if (es_estudiante === 1 || 
+          (usuarioActual.Es_estudiante === 1 && id_centro_educativo !== undefined && id_centro_educativo !== usuarioActual.ID_centro_educativo)) {
+        datosActualizar.esta_verificado = false;
+      }
+    }
 
     // Si no hay datos para actualizar
     if (Object.keys(datosActualizar).length === 0) {

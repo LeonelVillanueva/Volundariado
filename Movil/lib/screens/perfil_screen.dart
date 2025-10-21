@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
@@ -336,6 +337,45 @@ class _PerfilScreenState extends State<PerfilScreen> {
   Future<void> _guardarPerfil() async {
     if (!_formKey.currentState!.validate()) return;
     
+    // VALIDACIÓN: Email personal
+    if (_emailPersonalController.text.isNotEmpty && 
+        !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(_emailPersonalController.text)) {
+      _mostrarMensaje('El email personal no es válido. Debe contener @ y un dominio válido', false);
+      return;
+    }
+    
+    // VALIDACIÓN: Email académico
+    if (_emailAcademicoController.text.isNotEmpty && 
+        !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(_emailAcademicoController.text)) {
+      _mostrarMensaje('El email académico no es válido. Debe contener @ y un dominio válido', false);
+      return;
+    }
+    
+    // VALIDACIÓN: Teléfono (8 dígitos)
+    if (_telefonoController.text.isNotEmpty) {
+      final digitos = _telefonoController.text.replaceAll(RegExp(r'\D'), '');
+      if (digitos.length != 8) {
+        _mostrarMensaje('El teléfono debe tener exactamente 8 dígitos', false);
+        return;
+      }
+    }
+    
+    // Validar campos de estudiante si está marcado como estudiante
+    if (_esEstudiante) {
+      if (_centroEducativoSeleccionado == null) {
+        _mostrarMensaje('Debe seleccionar un centro educativo', false);
+        return;
+      }
+      if (_numCuentaController.text.trim().isEmpty) {
+        _mostrarMensaje('Debe ingresar su número de cuenta o identidad', false);
+        return;
+      }
+      if (_carreraSeleccionada == null) {
+        _mostrarMensaje('Debe seleccionar una carrera', false);
+        return;
+      }
+    }
+    
     setState(() => _cargando = true);
     
     try {
@@ -346,10 +386,10 @@ class _PerfilScreenState extends State<PerfilScreen> {
         'email_academico': _emailAcademicoController.text.trim(),
         'telefono': _telefonoController.text.trim(),
         'fecha_nacimiento': _fechaNacimiento?.toIso8601String().split('T')[0],
-        'es_estudiante': _esEstudiante,
-        'id_centro_educativo': _centroEducativoSeleccionado,
-        'num_cuenta': _numCuentaController.text.trim(),
-        'id_carrera': _carreraSeleccionada,
+        'es_estudiante': _esEstudiante ? 1 : 0,
+        'id_centro_educativo': _esEstudiante ? _centroEducativoSeleccionado : null,
+        'num_cuenta': _esEstudiante ? _numCuentaController.text.trim() : null,
+        'id_carrera': _esEstudiante ? _carreraSeleccionada : null,
       };
       
       final response = await _apiService.put('/api/auth/perfil', datos);
@@ -520,120 +560,119 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   
                   const SizedBox(height: 16),
                   
-                  // Tarjeta de Configuración de Privacidad
+                  // Tarjeta de Configuración de Privacidad (Compacta)
                   Card(
                     elevation: 4,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Configuración de Privacidad',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF166534),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Controla qué información pueden ver otros usuarios',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          
-                          // Nota informativa
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFDEEBFF),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: const Color(0xFF1976D2)),
-                            ),
-                            child: const Row(
-                              children: [
-                                Icon(Icons.info_outline, color: Color(0xFF1976D2), size: 20),
-                                SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    'Tu docente podrá ver tu información por motivos académicos.',
-                                    style: TextStyle(fontSize: 12, color: Color(0xFF1565C0)),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          
-                          // Perfil Público
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF0FDF4),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: CheckboxListTile(
-                              value: _privacidad['perfil_publico'] ?? true,
-                              onChanged: (value) {
-                                setState(() {
-                                  _privacidad['perfil_publico'] = value ?? true;
-                                });
-                              },
-                              title: const Text(
-                                'Perfil Público',
-                                style: TextStyle(fontWeight: FontWeight.w600),
-                              ),
-                              subtitle: const Text(
-                                'Permite que otros usuarios vean tu perfil',
-                                style: TextStyle(fontSize: 12),
-                              ),
-                              activeColor: const Color(0xFF16A34A),
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                          ),
-                          
-                          // Opciones de privacidad (solo si perfil es público)
-                          if (_privacidad['perfil_publico'] ?? true) ...[
-                            const SizedBox(height: 12),
-                            _buildOpcionPrivacidad('mostrar_email_personal', 'Mostrar email personal'),
-                            _buildOpcionPrivacidad('mostrar_email_academico', 'Mostrar email académico'),
-                            _buildOpcionPrivacidad('mostrar_telefono', 'Mostrar teléfono'),
-                            _buildOpcionPrivacidad('mostrar_fecha_nacimiento', 'Mostrar fecha de nacimiento'),
-                            _buildOpcionPrivacidad('mostrar_centro_educativo', 'Mostrar centro educativo'),
-                            _buildOpcionPrivacidad('mostrar_carrera', 'Mostrar carrera'),
-                            _buildOpcionPrivacidad('mostrar_horas_voluntariado', 'Mostrar horas de voluntariado'),
-                          ],
-                          
-                          const SizedBox(height: 20),
-                          
-                          // Botón guardar privacidad
-                          SizedBox(
-                            width: double.infinity,
-                            height: 48,
-                            child: ElevatedButton(
-                              onPressed: _guardarPrivacidad,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF16A34A),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: const Text(
-                                'Guardar Configuración de Privacidad',
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ),
-                        ],
+                    child: ExpansionTile(
+                      tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      childrenPadding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+                      leading: const Icon(
+                        Icons.privacy_tip_outlined,
+                        color: Color(0xFF16A34A),
+                        size: 28,
                       ),
+                      title: const Text(
+                        'Configuración de Privacidad',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF166534),
+                        ),
+                      ),
+                      subtitle: const Text(
+                        'Controla qué información es visible',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                      children: [
+                        // Nota informativa
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFDEEBFF),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: const Color(0xFF1976D2)),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.info_outline, color: Color(0xFF1976D2), size: 16),
+                              SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  'Tu docente podrá ver tu información por motivos académicos.',
+                                  style: TextStyle(fontSize: 11, color: Color(0xFF1565C0)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        
+                        // Perfil Público
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF0FDF4),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: SwitchListTile(
+                            value: _privacidad['perfil_publico'] ?? true,
+                            onChanged: (value) {
+                              setState(() {
+                                _privacidad['perfil_publico'] = value;
+                              });
+                            },
+                            title: const Text(
+                              'Perfil Público',
+                              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                            ),
+                            subtitle: const Text(
+                              'Permite que otros usuarios vean tu perfil',
+                              style: TextStyle(fontSize: 11),
+                            ),
+                            activeColor: const Color(0xFF16A34A),
+                            contentPadding: EdgeInsets.zero,
+                            dense: true,
+                          ),
+                        ),
+                        
+                        // Opciones de privacidad compactas
+                        if (_privacidad['perfil_publico'] ?? true) ...[
+                          const SizedBox(height: 8),
+                          _buildOpcionPrivacidadCompacta('mostrar_email_personal', 'Email personal'),
+                          _buildOpcionPrivacidadCompacta('mostrar_email_academico', 'Email académico'),
+                          _buildOpcionPrivacidadCompacta('mostrar_telefono', 'Teléfono'),
+                          _buildOpcionPrivacidadCompacta('mostrar_fecha_nacimiento', 'Fecha de nacimiento'),
+                          _buildOpcionPrivacidadCompacta('mostrar_centro_educativo', 'Centro educativo'),
+                          _buildOpcionPrivacidadCompacta('mostrar_carrera', 'Carrera'),
+                          _buildOpcionPrivacidadCompacta('mostrar_horas_voluntariado', 'Horas de voluntariado'),
+                        ],
+                        
+                        const SizedBox(height: 12),
+                        
+                        // Botón guardar compacto
+                        SizedBox(
+                          width: double.infinity,
+                          height: 42,
+                          child: ElevatedButton.icon(
+                            onPressed: _guardarPrivacidad,
+                            icon: const Icon(Icons.save, size: 18),
+                            label: const Text(
+                              'Guardar Privacidad',
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF16A34A),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -642,17 +681,34 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
   
-  Widget _buildOpcionPrivacidad(String clave, String titulo) {
-    return CheckboxListTile(
-      value: _privacidad[clave] ?? false,
-      onChanged: (value) {
-        setState(() {
-          _privacidad[clave] = value ?? false;
-        });
-      },
-      title: Text(titulo),
-      activeColor: const Color(0xFF16A34A),
-      contentPadding: const EdgeInsets.only(left: 16),
+  Widget _buildOpcionPrivacidadCompacta(String clave, String titulo) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8, bottom: 4),
+      child: Row(
+        children: [
+          SizedBox(
+            height: 32,
+            child: Checkbox(
+              value: _privacidad[clave] ?? false,
+              onChanged: (value) {
+                setState(() {
+                  _privacidad[clave] = value ?? false;
+                });
+              },
+              activeColor: const Color(0xFF16A34A),
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              titulo,
+              style: const TextStyle(fontSize: 13),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -852,6 +908,9 @@ class _PerfilScreenState extends State<PerfilScreen> {
                     borderSide: BorderSide(color: Color(0xFF16A34A)),
                   ),
                 ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]')),
+                ],
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Los nombres son requeridos';
@@ -872,6 +931,9 @@ class _PerfilScreenState extends State<PerfilScreen> {
                     borderSide: BorderSide(color: Color(0xFF16A34A)),
                   ),
                 ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]')),
+                ],
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Los apellidos son requeridos';
@@ -938,12 +1000,27 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 enabled: _modoEdicion,
                 decoration: const InputDecoration(
                   labelText: 'Teléfono',
+                  hintText: '12345678',
+                  helperText: '8 dígitos',
                   border: OutlineInputBorder(),
                   focusedBorder: OutlineInputBorder(
                     borderSide: BorderSide(color: Color(0xFF16A34A)),
                   ),
                 ),
-                keyboardType: TextInputType.phone,
+                keyboardType: TextInputType.number,
+                maxLength: 8,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
+                validator: (value) {
+                  if (value != null && value.isNotEmpty) {
+                    final digitos = value.replaceAll(RegExp(r'\D'), '');
+                    if (digitos.length != 8) {
+                      return 'Debe tener 8 dígitos';
+                    }
+                  }
+                  return null;
+                },
               ),
             ),
             const SizedBox(width: 12),
@@ -988,7 +1065,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
         // Checkbox Es Estudiante
         CheckboxListTile(
           title: const Text(
-            'Soy Estudiante',
+            'Pertenezco a un centro educativo',
             style: TextStyle(
               fontWeight: FontWeight.w500,
               color: Color(0xFF166534), // Verde oscuro
@@ -1034,15 +1111,49 @@ class _PerfilScreenState extends State<PerfilScreen> {
               color: Color(0xFF166534), // Verde oscuro
             ),
           ),
+          const SizedBox(height: 8),
+          
+          // Mensaje informativo
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFDEEBFF),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFF1976D2)),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.info_outline, color: Color(0xFF1976D2), size: 20),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Los campos marcados con * son obligatorios para guardar',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF1565C0)),
+                  ),
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 16),
           
           // Centro Educativo
           DropdownButtonFormField<int>(
             value: _centroEducativoSeleccionado,
-            decoration: const InputDecoration(
-              labelText: 'Centro Educativo',
-              border: OutlineInputBorder(),
-              focusedBorder: OutlineInputBorder(
+            decoration: InputDecoration(
+              label: RichText(
+                text: const TextSpan(
+                  text: 'Centro Educativo ',
+                  style: TextStyle(color: Color(0xFF4B5563), fontSize: 16),
+                  children: [
+                    TextSpan(
+                      text: '*',
+                      style: TextStyle(color: Colors.red, fontSize: 16),
+                    ),
+                  ],
+                ),
+              ),
+              border: const OutlineInputBorder(),
+              focusedBorder: const OutlineInputBorder(
                 borderSide: BorderSide(color: Color(0xFF16A34A)),
               ),
             ),
@@ -1064,24 +1175,50 @@ class _PerfilScreenState extends State<PerfilScreen> {
           TextFormField(
             controller: _numCuentaController,
             enabled: _modoEdicion,
-            decoration: const InputDecoration(
-              labelText: 'Número de Cuenta / Identidad',
+            decoration: InputDecoration(
+              label: RichText(
+                text: const TextSpan(
+                  text: 'Número de Cuenta / Identidad ',
+                  style: TextStyle(color: Color(0xFF4B5563), fontSize: 16),
+                  children: [
+                    TextSpan(
+                      text: '*',
+                      style: TextStyle(color: Colors.red, fontSize: 16),
+                    ),
+                  ],
+                ),
+              ),
               hintText: 'Ej: 0000-00000-0000',
-              border: OutlineInputBorder(),
-              focusedBorder: OutlineInputBorder(
+              border: const OutlineInputBorder(),
+              focusedBorder: const OutlineInputBorder(
                 borderSide: BorderSide(color: Color(0xFF16A34A)),
               ),
             ),
+            keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9\-]')),
+            ],
           ),
           const SizedBox(height: 16),
           
           // Carrera
           DropdownButtonFormField<int>(
             value: _carreraSeleccionada,
-            decoration: const InputDecoration(
-              labelText: 'Carrera',
-              border: OutlineInputBorder(),
-              focusedBorder: OutlineInputBorder(
+            decoration: InputDecoration(
+              label: RichText(
+                text: const TextSpan(
+                  text: 'Carrera ',
+                  style: TextStyle(color: Color(0xFF4B5563), fontSize: 16),
+                  children: [
+                    TextSpan(
+                      text: '*',
+                      style: TextStyle(color: Colors.red, fontSize: 16),
+                    ),
+                  ],
+                ),
+              ),
+              border: const OutlineInputBorder(),
+              focusedBorder: const OutlineInputBorder(
                 borderSide: BorderSide(color: Color(0xFF16A34A)),
               ),
             ),
@@ -1109,7 +1246,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
           Row(
             children: [
               const Text(
-                'Estado de Verificación: ',
+                'Estado: ',
                 style: TextStyle(
                   fontWeight: FontWeight.w500,
                   color: Color(0xFF166534), // Verde oscuro
@@ -1136,6 +1273,17 @@ class _PerfilScreenState extends State<PerfilScreen> {
               ),
             ],
           ),
+          if (_usuario?.estaVerificado != 1) ...[
+            const SizedBox(height: 8),
+            const Text(
+              'Un docente debe aprobarte en tu centro educativo',
+              style: TextStyle(
+                fontSize: 11,
+                color: Color(0xFF6B7280),
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
         ],
       ),
     );

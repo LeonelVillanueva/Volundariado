@@ -110,6 +110,11 @@ class ApiService {
       final response = await _dio.post(endpoint, data: data);
       return response.data;
     } on DioException catch (e) {
+      // Si hay una respuesta del servidor con estructura JSON, devolverla
+      if (e.response != null && e.response!.data is Map) {
+        return e.response!.data as Map<String, dynamic>;
+      }
+      // Si no, lanzar el error
       throw _handleError(e);
     }
   }
@@ -120,6 +125,11 @@ class ApiService {
       final response = await _dio.put(endpoint, data: data);
       return response.data;
     } on DioException catch (e) {
+      // Si hay una respuesta del servidor con estructura JSON, devolverla
+      if (e.response != null && e.response!.data is Map) {
+        return e.response!.data as Map<String, dynamic>;
+      }
+      // Si no, lanzar el error
       throw _handleError(e);
     }
   }

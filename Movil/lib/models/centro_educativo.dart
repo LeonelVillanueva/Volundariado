@@ -5,6 +5,7 @@ class CentroEducativo {
   final String? ciudad;
   final String? telefono;
   final String? email;
+  final String? dominioEmail;
   final String? estado;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -16,6 +17,7 @@ class CentroEducativo {
     this.ciudad,
     this.telefono,
     this.email,
+    this.dominioEmail,
     this.estado,
     this.createdAt,
     this.updatedAt,
@@ -29,6 +31,7 @@ class CentroEducativo {
       ciudad: json['Ciudad'] ?? json['ciudad'],
       telefono: json['Telefono'] ?? json['telefono'],
       email: json['Email'] ?? json['email'],
+      dominioEmail: json['Dominio_email'] ?? json['dominio_email'],
       estado: json['Estado'] ?? json['estado'],
       createdAt: json['created_at'] != null 
           ? DateTime.parse(json['created_at']) 
@@ -47,6 +50,7 @@ class CentroEducativo {
       'Ciudad': ciudad,
       'Telefono': telefono,
       'Email': email,
+      'Dominio_email': dominioEmail,
       'Estado': estado,
       'created_at': createdAt?.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
